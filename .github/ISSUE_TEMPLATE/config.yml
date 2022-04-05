@@ -3,16 +3,16 @@
 blank_issues_enabled: false
 contact_links:
   - name: "\U0001F381 Feature requests"
-    url: https://forum.activitywatch.net/c/features
+    url: https://forum.komutracker.net/c/features
     about: Request and vote on features on the forum.
   - name: "\u2753 Support"
-    url: https://forum.activitywatch.net/
+    url: https://forum.komutracker.net/
     about: Need help with something? Ask for help on the forum!
   - name: "\U0001F4AD Discussion (on our forum)"
-    url: https://forum.activitywatch.net/
-    about: The preferred place for general discussion about ActivityWatch
+    url: https://forum.komutracker.net/
+    about: The preferred place for general discussion about KomuTracker
   - name: "\U0001F4AD Discussion (on GitHub Discussions)"
-    url: https://github.com/ActivityWatch/activitywatch/discussions
+    url: https://github.com/KomuTracker/komutracker/discussions
     about: We're testing it out (but the forum is still the preferred place).
   - name: "\U0001F4AC Chat with us on Discord"
     url: https://discord.gg/dctJK6USjK

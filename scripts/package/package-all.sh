@@ -46,20 +46,20 @@ echo "Platform: $platform, arch: $arch, version: $version"
 function build_zip() {
     echo "Zipping executables..."
     pushd dist;
-    filename="activitywatch-${version}-${platform}-${arch}.zip"
+    filename="komutracker-${version}-${platform}-${arch}.zip"
     echo "Name of package will be: $filename"
 
     if [[ $platform == "windows"* ]]; then
-        7z a $filename activitywatch;
+        7z a $filename komutracker;
     else
-        zip -r $filename activitywatch;
+        zip -r $filename komutracker;
     fi
     popd;
     echo "Zip built!"
 }
 
 function build_setup() {
-    filename="activitywatch-${version}-${platform}-${arch}-setup.exe"
+    filename="komutracker-${version}-${platform}-${arch}-setup.exe"
     echo "Name of package will be: $filename"
 
     innosetupdir="/c/Program Files (x86)/Inno Setup 6"
@@ -70,8 +70,8 @@ function build_setup() {
 
     # Windows installer version should not include 'v' prefix, see: https://github.com/microsoft/winget-pkgs/pull/17564
     version_no_prefix="$(echo $version | sed -e 's/^v//')"
-    env AW_VERSION=$version_no_prefix "$innosetupdir/iscc.exe" scripts/package/activitywatch-setup.iss
-    mv dist/activitywatch-setup.exe dist/$filename
+    env AW_VERSION=$version_no_prefix "$innosetupdir/iscc.exe" scripts/package/komutracker-setup.iss
+    mv dist/komutracker-setup.exe dist/$filename
     echo "Setup built!"
 }
 

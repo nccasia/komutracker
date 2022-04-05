@@ -1,9 +1,9 @@
 # =====================================
-# Makefile for the ActivityWatch bundle
+# Makefile for the KomuTracker bundle
 # =====================================
 #
 # [GUIDE] How to install from source:
-#  - https://activitywatch.readthedocs.io/en/latest/installing-from-source.html
+#  - https://komutracker.readthedocs.io/en/latest/installing-from-source.html
 #
 # We recommend creating and activating a Python virtualenv before building.
 # Instructions on how to do this can be found in the guide linked above.
@@ -50,7 +50,7 @@ ifndef SKIP_SERVER_RUST  # Skip building aw-server-rust if SKIP_SERVER_RUST is d
 	fi
 endif
 	make --directory=aw-qt build
-#   The below is needed due to: https://github.com/ActivityWatch/activitywatch/issues/173
+#   The below is needed due to: https://github.com/KomuTracker/komutracker/issues/173
 	make --directory=aw-client build
 	make --directory=aw-core build
 #	Needed to ensure that the server has the correct version set
@@ -111,7 +111,7 @@ test:
 test-integration:
 	# TODO: Move "integration tests" to aw-client
 	# FIXME: For whatever reason the script stalls on Appveyor
-	#        Example: https://ci.appveyor.com/project/ErikBjare/activitywatch/build/1.0.167/job/k1ulexsc5ar5uv4v
+	#        Example: https://ci.appveyor.com/project/ErikBjare/komutracker/build/1.0.167/job/k1ulexsc5ar5uv4v
 	pytest ./scripts/tests/integration_tests.py ./aw-server/tests/ -v
 
 ICON := "aw-qt/media/logo/logo.png"
@@ -132,45 +132,45 @@ aw-qt/media/logo/logo.icns:
 	rm -R build/MyIcon.iconset
 	mv build/MyIcon.icns aw-qt/media/logo/logo.icns
 
-dist/ActivityWatch.app: aw-qt/media/logo/logo.icns
+dist/KomuTracker.app: aw-qt/media/logo/logo.icns
 	pyinstaller --clean --noconfirm --windowed aw.spec
 
-dist/ActivityWatch.dmg: dist/ActivityWatch.app
+dist/KomuTracker.dmg: dist/KomuTracker.app
 	# NOTE: This does not codesign the dmg, that is done in the CI config
 	pip install dmgbuild
-	dmgbuild -s scripts/package/dmgbuild-settings.py -D app=dist/ActivityWatch.app "ActivityWatch" dist/ActivityWatch.dmg
+	dmgbuild -s scripts/package/dmgbuild-settings.py -D app=dist/KomuTracker.app "KomuTracker" dist/KomuTracker.dmg
 
 dist/notarize:
 	./scripts/notarize.sh
 
 package:
-	mkdir -p dist/activitywatch
+	mkdir -p dist/komutracker
 #
 	make --directory=aw-watcher-afk package
-	cp -r aw-watcher-afk/dist/aw-watcher-afk dist/activitywatch
+	cp -r aw-watcher-afk/dist/aw-watcher-afk dist/komutracker
 #
 	make --directory=aw-watcher-window package
-	cp -r aw-watcher-window/dist/aw-watcher-window dist/activitywatch
+	cp -r aw-watcher-window/dist/aw-watcher-window dist/komutracker
 #
 	make --directory=aw-server package
-	cp -r aw-server/dist/aw-server dist/activitywatch
+	cp -r aw-server/dist/aw-server dist/komutracker
 ifndef SKIP_SERVER_RUST
 	make --directory=aw-server-rust package
-	mkdir -p dist/activitywatch/aw-server-rust
-	cp -r aw-server-rust/target/package/* dist/activitywatch/aw-server-rust
+	mkdir -p dist/komutracker/aw-server-rust
+	cp -r aw-server-rust/target/package/* dist/komutracker/aw-server-rust
 endif
 	make --directory=aw-qt package
-	cp -r aw-qt/dist/aw-qt/. dist/activitywatch
+	cp -r aw-qt/dist/aw-qt/. dist/komutracker
 # Remove problem-causing binaries
-	rm -f dist/activitywatch/libdrm.so.2       # see: https://github.com/ActivityWatch/activitywatch/issues/161
-	rm -f dist/activitywatch/libharfbuzz.so.0  # see: https://github.com/ActivityWatch/activitywatch/issues/660#issuecomment-959889230
+	rm -f dist/komutracker/libdrm.so.2       # see: https://github.com/KomuTracker/komutracker/issues/161
+	rm -f dist/komutracker/libharfbuzz.so.0  # see: https://github.com/KomuTracker/komutracker/issues/660#issuecomment-959889230
 # These should be provided by the distro itself
 # Had to be removed due to otherwise causing the error: 
-#   aw-qt: symbol lookup error: /opt/activitywatch/libQt5XcbQpa.so.5: undefined symbol: FT_Get_Font_Format
-	rm -f dist/activitywatch/libfontconfig.so.1
-	rm -f dist/activitywatch/libfreetype.so.6
+#   aw-qt: symbol lookup error: /opt/komutracker/libQt5XcbQpa.so.5: undefined symbol: FT_Get_Font_Format
+	rm -f dist/komutracker/libfontconfig.so.1
+	rm -f dist/komutracker/libfreetype.so.6
 # Remove unecessary files
-	rm -rf dist/activitywatch/pytz
+	rm -rf dist/komutracker/pytz
 # Builds zips and setups
 	bash scripts/package/package-all.sh
 

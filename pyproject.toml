@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "activitywatch"
+name = "komutracker"
 version = "0.12.0"
 description = ""
 authors = ["Erik Bjäreholt <erik@bjareho.lt>"]

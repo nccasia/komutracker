@@ -66,12 +66,12 @@ jobs:
           ${{ runner.os }}-${{ env.cache-name }}-
     - name: Cache cargo build
       uses: actions/cache@v1
-      if: runner.os != 'macOS'  # cache doesn't seem to behave nicely on macOS, see: https://github.com/ActivityWatch/aw-server-rust/issues/180
+      if: runner.os != 'macOS'  # cache doesn't seem to behave nicely on macOS, see: https://github.com/KomuTracker/aw-server-rust/issues/180
       env:
         cache-name: cargo-build-target
       with:
         path: aw-server-rust/target
-        # key needs to contain rustc_hash due to https://github.com/ActivityWatch/aw-server-rust/issues/180
+        # key needs to contain rustc_hash due to https://github.com/KomuTracker/aw-server-rust/issues/180
         key: ${{ runner.os }}-${{ env.cache-name }}-${{ steps.toolchain.outputs.rustc_hash }}-${{ hashFiles('**/Cargo.lock') }}
         restore-keys: |
           ${{ runner.os }}-${{ env.cache-name }}-${{ steps.toolchain.outputs.rustc_hash }}-
@@ -141,17 +141,17 @@ jobs:
 
         # Build .app and .dmg
         source venv/bin/activate
-        make dist/ActivityWatch.dmg
-        codesign --verbose -s ${APPLE_PERSONALID} dist/ActivityWatch.dmg
+        make dist/KomuTracker.dmg
+        codesign --verbose -s ${APPLE_PERSONALID} dist/KomuTracker.dmg
 
         # Run prechecks
         brew install akeru-inc/tap/xcnotary
-        xcnotary precheck dist/ActivityWatch.app
-        xcnotary precheck dist/ActivityWatch.dmg
+        xcnotary precheck dist/KomuTracker.app
+        xcnotary precheck dist/KomuTracker.dmg
 
         # Notarize
         make dist/notarize
-        mv dist/ActivityWatch.dmg dist/activitywatch-$(scripts/package/getversion.sh)-macos-x86_64.dmg
+        mv dist/KomuTracker.dmg dist/komutracker-$(scripts/package/getversion.sh)-macos-x86_64.dmg
       env:
         APPLE_EMAIL: ${{ secrets.APPLE_EMAIL }}
         APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
@@ -164,5 +164,5 @@ jobs:
       uses: actions/upload-artifact@v2-preview
       with:
         name: builds-${{ runner.os }}-py${{ matrix.python_version }}
-        path: dist/activitywatch-*.*
+        path: dist/komutracker-*.*
 
