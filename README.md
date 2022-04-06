@@ -11,7 +11,7 @@
   <a href="https://twitter.com/ActivityWatchIt">
     <img title="Twitter follow" src="https://img.shields.io/twitter/follow/ActivityWatchIt.svg?style=social&label=Follow"/>
   </a>
-  <a href="https://github.com/KomuTracker/komutracker">
+  <a href="https://github.com/nccasia/komutracker">
     <img title="Star on GitHub" src="https://img.shields.io/github/stars/KomuTracker/komutracker.svg?style=social&label=Star">
   </a>
 
@@ -21,7 +21,7 @@
     <a href="https://komutracker.net/">Website</a>
     — <a href="https://forum.komutracker.net/">Forum</a>
     — <a href="https://docs.komutracker.net">Documentation</a>
-    — <a href="https://github.com/KomuTracker/komutracker/releases">Releases</a>
+    — <a href="https://github.com/nccasia/komutracker/releases">Releases</a>
   </b>
 
   <br>
@@ -39,8 +39,8 @@
 
   <br>
 
-  <a href="https://github.com/KomuTracker/komutracker/actions?query=branch%3Amaster">
-    <img title="Build Status GitHub" src="https://github.com/KomuTracker/komutracker/workflows/Build/badge.svg?branch=master" />
+  <a href="https://github.com/nccasia/komutracker/actions?query=branch%3Amaster">
+    <img title="Build Status GitHub" src="https://github.com/nccasia/komutracker/workflows/Build/badge.svg?branch=master" />
   </a>
   <a href="https://ci.appveyor.com/project/ErikBjare/komutracker">
     <img title="Build Status Appveyor" src="https://ci.appveyor.com/api/projects/status/vm7g9sdfi2vgix6n?svg=true" />
@@ -51,10 +51,10 @@
 
   <br>
 
-  <a href="https://github.com/KomuTracker/komutracker/releases">
+  <a href="https://github.com/nccasia/komutracker/releases">
     <img title="Latest release" src="https://img.shields.io/github/release-pre/KomuTracker/komutracker.svg">
   </a>
-  <a href="https://github.com/KomuTracker/komutracker/releases">
+  <a href="https://github.com/nccasia/komutracker/releases">
     <img title="Total downloads (GitHub Releases)" src="https://img.shields.io/github/downloads/KomuTracker/komutracker/total.svg" />
   </a>
   <a href="https://discord.gg/vDskV9q">
@@ -107,7 +107,7 @@ It is up to you as user to collect as much as you want, or as little as you want
 
 ## Installation & Usage
 
-Downloads are available on our [releases page](https://github.com/KomuTracker/komutracker/releases).
+Downloads are available on our [releases page](https://github.com/nccasia/komutracker/releases).
 
 For instructions on how to get started, please see [our guide in the documentation](https://docs.komutracker.net/en/latest/getting-started.html).
 
@@ -146,7 +146,7 @@ We have a plan to address all of these and we're well on our way. See the table 
 | [RescueTime]    | :x:                | :white_check_mark: | Centralized                | :x:                |
 | [WakaTime]      | :x:                | :white_check_mark: | Centralized                | Clients            |
 
-[sync]: https://github.com/KomuTracker/komutracker/issues/35
+[sync]: https://github.com/nccasia/komutracker/issues/35
 [Selfspy]: https://github.com/selfspy/selfspy
 [ulogme]: https://github.com/karpathy/ulogme
 [RescueTime]: https://www.rescuetime.com/
@@ -177,7 +177,7 @@ For a complete list of the things KomuTracker can track, [see the page on *watch
 
 ## About this repository
 
-This repo is a bundle of the core components and official modules of KomuTracker (managed with `git submodule`). It's primary use is as a meta-package providing all the components in one repo; enabling easier packaging and installation. It is also where releases of the full suite are published (see [releases](https://github.com/KomuTracker/komutracker/releases)).
+This repo is a bundle of the core components and official modules of KomuTracker (managed with `git submodule`). It's primary use is as a meta-package providing all the components in one repo; enabling easier packaging and installation. It is also where releases of the full suite are published (see [releases](https://github.com/nccasia/komutracker/releases)).
 
 ### Server
 

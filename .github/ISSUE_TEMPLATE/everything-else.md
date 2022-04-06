@@ -11,7 +11,7 @@ assignees: ''
 
 
 <!-- Checked checkbox should look like this: [x] -->
-- [ ] I have searched the [issues](https://github.com/KomuTracker/komutracker/issues) of this repo and believe that this is not a duplicate.
+- [ ] I have searched the [issues](https://github.com/nccasia/komutracker/issues) of this repo and believe that this is not a duplicate.
 - [ ] I have searched the [documentation](https://docs.komutracker.net/en/latest/) and believe that my question is not covered.
 
 ## Issue

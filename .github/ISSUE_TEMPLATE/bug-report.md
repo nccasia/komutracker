@@ -16,7 +16,7 @@ assignees: ''
 -->
 
 <!-- Checked checkbox should look like this: [x] -->
- - [ ] I am on the [latest](https://github.com/KomuTracker/komutracker/releases/latest) KomuTracker version.
+ - [ ] I am on the [latest](https://github.com/nccasia/komutracker/releases/latest) KomuTracker version.
  - [ ] I have searched the issues of this repo and believe that this is not a duplicate.
 
 

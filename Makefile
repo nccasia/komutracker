@@ -11,6 +11,9 @@
 # These targets should always rerun
 .PHONY: build install test clean clean_all
 
+SKIP_SERVER_PYTHON := 1   # Skip building the server Python
+SKIP_SERVER_RUST := 1     # Skip building the server Rust
+
 SHELL := /usr/bin/env bash
 
 # The `build` target
@@ -50,7 +53,7 @@ ifndef SKIP_SERVER_RUST  # Skip building aw-server-rust if SKIP_SERVER_RUST is d
 	fi
 endif
 	make --directory=aw-qt build
-#   The below is needed due to: https://github.com/KomuTracker/komutracker/issues/173
+#   The below is needed due to: https://github.com/nccasia/komutracker/issues/173
 	make --directory=aw-client build
 	make --directory=aw-core build
 #	Needed to ensure that the server has the correct version set
@@ -152,8 +155,10 @@ package:
 	make --directory=aw-watcher-window package
 	cp -r aw-watcher-window/dist/aw-watcher-window dist/komutracker
 #
+ifndef SKIP_SERVER_PYTHON
 	make --directory=aw-server package
 	cp -r aw-server/dist/aw-server dist/komutracker
+endif	
 ifndef SKIP_SERVER_RUST
 	make --directory=aw-server-rust package
 	mkdir -p dist/komutracker/aw-server-rust
@@ -162,8 +167,8 @@ endif
 	make --directory=aw-qt package
 	cp -r aw-qt/dist/aw-qt/. dist/komutracker
 # Remove problem-causing binaries
-	rm -f dist/komutracker/libdrm.so.2       # see: https://github.com/KomuTracker/komutracker/issues/161
-	rm -f dist/komutracker/libharfbuzz.so.0  # see: https://github.com/KomuTracker/komutracker/issues/660#issuecomment-959889230
+	rm -f dist/komutracker/libdrm.so.2       # see: https://github.com/nccasia/komutracker/issues/161
+	rm -f dist/komutracker/libharfbuzz.so.0  # see: https://github.com/nccasia/komutracker/issues/660#issuecomment-959889230
 # These should be provided by the distro itself
 # Had to be removed due to otherwise causing the error: 
 #   aw-qt: symbol lookup error: /opt/komutracker/libQt5XcbQpa.so.5: undefined symbol: FT_Get_Font_Format

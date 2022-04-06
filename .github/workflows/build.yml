@@ -66,12 +66,12 @@ jobs:
           ${{ runner.os }}-${{ env.cache-name }}-
     - name: Cache cargo build
       uses: actions/cache@v1
-      if: runner.os != 'macOS'  # cache doesn't seem to behave nicely on macOS, see: https://github.com/KomuTracker/aw-server-rust/issues/180
+      if: runner.os != 'macOS'  # cache doesn't seem to behave nicely on macOS, see: https://github.com/nccasia/aw-server-rust/issues/180
       env:
         cache-name: cargo-build-target
       with:
         path: aw-server-rust/target
-        # key needs to contain rustc_hash due to https://github.com/KomuTracker/aw-server-rust/issues/180
+        # key needs to contain rustc_hash due to https://github.com/nccasia/aw-server-rust/issues/180
         key: ${{ runner.os }}-${{ env.cache-name }}-${{ steps.toolchain.outputs.rustc_hash }}-${{ hashFiles('**/Cargo.lock') }}
         restore-keys: |
           ${{ runner.os }}-${{ env.cache-name }}-${{ steps.toolchain.outputs.rustc_hash }}-

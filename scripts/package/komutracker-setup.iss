@@ -20,8 +20,8 @@ AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
-AppSupportURL="https://github.com/KomuTracker/komutracker/issues"
-AppUpdatesURL="https://github.com/KomuTracker/komutracker/releases"
+AppSupportURL="https://github.com/nccasia/komutracker/issues"
+AppUpdatesURL="https://github.com/nccasia/komutracker/releases"
 DefaultDirName={autopf}\{#MyAppName}
 DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)

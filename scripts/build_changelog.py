@@ -31,18 +31,18 @@ class Commit:
         """Generates links from commit and issue references (like 0c14d77, #123) to correct repo and such"""
         s = self.msg
         s = re.sub(
-            r"[^(-]https://github.com/KomuTracker/([\-\w\d]+)/(issues|pulls)/(\d+)",
-            r"[#\3](https://github.com/KomuTracker/\1/issues/\3)",
+            r"[^(-]https://github.com/nccasia/([\-\w\d]+)/(issues|pulls)/(\d+)",
+            r"[#\3](https://github.com/nccasia/\1/issues/\3)",
             s,
         )
         s = re.sub(
             r"#(\d+)",
-            rf"[#\1](https://github.com/KomuTracker/{self.repo}/issues/\1)",
+            rf"[#\1](https://github.com/nccasia/{self.repo}/issues/\1)",
             s,
         )
         s = re.sub(
             r"[\s\(][0-9a-f]{7}[\s\)]",
-            rf"[`\0`](https://github.com/KomuTracker/{self.repo}/issues/\0)",
+            rf"[`\0`](https://github.com/nccasia/{self.repo}/issues/\0)",
             s,
         )
         return s
@@ -87,11 +87,11 @@ def run(cmd, cwd=".") -> str:
 
 
 def pr_linkify(prid: str, repo: str) -> str:
-    return f"[#{prid}](https://github.com/KomuTracker/{repo}/pulls/{prid})"
+    return f"[#{prid}](https://github.com/nccasia/{repo}/pulls/{prid})"
 
 
 def commit_linkify(commitid: str, repo: str) -> str:
-    return f"[`{commitid}`](https://github.com/KomuTracker/{repo}/commit/{commitid})"
+    return f"[`{commitid}`](https://github.com/nccasia/{repo}/commit/{commitid})"
 
 
 def wrap_details(title, body, wraplines=5):

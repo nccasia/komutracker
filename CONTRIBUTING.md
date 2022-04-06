@@ -40,10 +40,10 @@ If you're interested in what's next for KomuTracker, have a look at our [roadmap
 
 Most of the above will get you up on our [contributor stats page][contributors] as thanks!
 
-[good first issue]: https://github.com/KomuTracker/komutracker/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
-[help wanted]: https://github.com/KomuTracker/komutracker/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22
-[bugs]: https://github.com/KomuTracker/komutracker/issues?q=is%3Aissue+is%3Aopen+label%3A%22type%3A+bug%22
-[milestones]: https://github.com/KomuTracker/komutracker/milestones
+[good first issue]: https://github.com/nccasia/komutracker/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
+[help wanted]: https://github.com/nccasia/komutracker/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22
+[bugs]: https://github.com/nccasia/komutracker/issues?q=is%3Aissue+is%3Aopen+label%3A%22type%3A+bug%22
+[milestones]: https://github.com/nccasia/komutracker/milestones
 [roadmap]: https://github.com/orgs/KomuTracker/projects/2
 [requested features]: https://forum.komutracker.net/c/features
 [contributors]: http://komutracker.net/contributors/
@@ -53,18 +53,18 @@ Most of the above will get you up on our [contributor stats page][contributors] 
 
 Thanks for wanting to help out with squashing bugs and more by filing an issue.
 
-When filing an issue, it's important to use an [issue template](https://github.com/KomuTracker/komutracker/issues/new/choose). This ensures that we have the information we need to understand the issue, so we don't have to ask for tons of follow-up questions, so we can fix the issue faster!
+When filing an issue, it's important to use an [issue template](https://github.com/nccasia/komutracker/issues/new/choose). This ensures that we have the information we need to understand the issue, so we don't have to ask for tons of follow-up questions, so we can fix the issue faster!
 
 
 ## Getting paid
 
 We're experimenting with paying our contributors using funds we've raised from donations and grants. 
 
-The idea is you track your work with KomuTracker (and ensure it gets categorized correctly), then you modify the [working_hours.py](https://github.com/KomuTracker/aw-client/blob/master/examples/working_hours.py) script to use your category rule and generate a report of time worked per day and the matching events.
+The idea is you track your work with KomuTracker (and ensure it gets categorized correctly), then you modify the [working_hours.py](https://github.com/nccasia/aw-client/blob/master/examples/working_hours.py) script to use your category rule and generate a report of time worked per day and the matching events.
 
 If you've contributed to KomuTracker (for a minimum of 10h) and want to get paid for your time, contact us!
 
-You can read more about this experiment on [the forum](https://forum.komutracker.net/t/getting-paid-with-komutracker/986) and in [the issues](https://github.com/KomuTracker/komutracker/issues/458).
+You can read more about this experiment on [the forum](https://forum.komutracker.net/t/getting-paid-with-komutracker/986) and in [the issues](https://github.com/nccasia/komutracker/issues/458).
 
 
 ## Code of Conduct
@@ -96,7 +96,7 @@ Examples:
  - docs: improved query documentation 
 ```
 
-This guideline was adopted in [issue #391](https://github.com/KomuTracker/komutracker/issues/391).
+This guideline was adopted in [issue #391](https://github.com/nccasia/komutracker/issues/391).
 
 
 ## Questions?
@@ -108,5 +108,5 @@ If you have any questions, you can:
  - (as a last resort/if needed) Email one of the maintainers at: [erik@bjareho.lt](mailto:erik@bjareho.lt)
 
 [forum]: https://forum.komutracker.net
-[github discussions]: https://github.com/KomuTracker/komutracker/discussions
+[github discussions]: https://github.com/nccasia/komutracker/discussions
 [discord]: https://discord.gg/vDskV9q
