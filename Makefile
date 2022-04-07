@@ -42,22 +42,10 @@ build:
 	make --directory=aw-client build
 	make --directory=aw-watcher-afk build
 	make --directory=aw-watcher-window build
-	make --directory=aw-server build SKIP_WEBUI=$(SKIP_WEBUI)
-ifndef SKIP_SERVER_RUST  # Skip building aw-server-rust if SKIP_SERVER_RUST is defined
-	echo 'Looking for rust...'
-	if (which cargo); then \
-		echo 'Rust found!'; \
-		make --directory=aw-server-rust build SKIP_WEBUI=$(SKIP_WEBUI); \
-	else \
-		echo 'Rust not found, skipping aw-server-rust!'; \
-	fi
-endif
 	make --directory=aw-qt build
 #   The below is needed due to: https://github.com/nccasia/komutracker/issues/173
 	make --directory=aw-client build
 	make --directory=aw-core build
-#	Needed to ensure that the server has the correct version set
-	python -c "import aw_server; print(aw_server.__version__)"
 
 
 # Install
@@ -88,7 +76,6 @@ lint:
 		aw-core/aw_transform/ \
 		aw-core/aw_analysis/ \
 		aw-client/aw_client/ \
-		aw-server/aw_server/ \
 		aw-watcher-window/aw_watcher_window/ \
 		aw-watcher-afk/aw_watcher_afk/ \
 		aw-qt/aw_qt/
@@ -107,15 +94,13 @@ uninstall:
 test:
 	make --directory=aw-core test
 	make --directory=aw-client test
-	make --directory=aw-server test
-	make --directory=aw-server-rust test
 	make --directory=aw-qt test
 
 test-integration:
 	# TODO: Move "integration tests" to aw-client
 	# FIXME: For whatever reason the script stalls on Appveyor
 	#        Example: https://ci.appveyor.com/project/ErikBjare/komutracker/build/1.0.167/job/k1ulexsc5ar5uv4v
-	pytest ./scripts/tests/integration_tests.py ./aw-server/tests/ -v
+	#pytest ./scripts/tests/integration_tests.py ./aw-server/tests/ -v
 
 ICON := "aw-qt/media/logo/logo.png"
 
@@ -187,10 +172,8 @@ clean_all: clean
 	make --directory=aw-client clean
 	make --directory=aw-core clean
 	make --directory=aw-qt clean
-	make --directory=aw-server clean
 	make --directory=aw-watcher-afk clean
 	make --directory=aw-watcher-window clean
-	make --directory=aw-server-rust clean
 
 clean-auto:
 	rm -rIv **/aw-server-rust/target
