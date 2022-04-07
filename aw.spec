@@ -24,10 +24,6 @@ assert codesign_identity, "Environment variable APPLE_PERSONALID not set"
 aw_core_path = Path(os.path.dirname(aw_core.__file__))
 restx_path = Path(os.path.dirname(flask_restx.__file__))
 
-aws_location = Path("aw-server")
-aw_server_rust_location = Path("aw-server-rust")
-aw_server_rust_bin = aw_server_rust_location / "target/package/aw-server-rust"
-aw_server_rust_webui = aw_server_rust_location / "target/package/static"
 aw_qt_location = Path("aw-qt")
 awa_location = Path("aw-watcher-afk")
 aww_location = Path("aw-watcher-window")
@@ -48,32 +44,12 @@ if platform.system() == "Windows":
     pyqt_path = os.path.dirname(PyQt5.__file__)
     extra_pathex.append(pyqt_path + "\\Qt\\bin")
 
-aw_server_a = Analysis(
-    ["aw-server/__main__.py"],
-    pathex=[],
-    binaries=None,
-    datas=[
-        (aws_location / "aw_server/static", "aw_server/static"),
-        (restx_path / "templates", "flask_restx/templates"),
-        (restx_path / "static", "flask_restx/static"),
-        (aw_core_path / "schemas", "aw_core/schemas"),
-    ],
-    hiddenimports=[],
-    hookspath=[],
-    runtime_hooks=[],
-    excludes=[],
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
-    cipher=block_cipher,
-)
-
 aw_qt_a = Analysis(
     [aw_qt_location / "aw_qt/__main__.py"],
     pathex=[] + extra_pathex,
-    binaries=[(aw_server_rust_bin, ".")],
+    binaries=None,
     datas=[
         (aw_qt_location / "resources/aw-qt.desktop", "aw_qt/resources"),
-        (aw_server_rust_webui, "aw_server_rust/static"),
     ],
     hiddenimports=[],
     hookspath=[],
@@ -139,7 +115,6 @@ aw_watcher_window_a = Analysis(
 # MERGE takes a bit weird arguments, it wants tuples which consists of
 # the analysis paired with the script name and the bin name
 MERGE(
-    (aw_server_a, "aw-server", "aw-server"),
     (aw_qt_a, "aw-qt", "aw-qt"),
     (aw_watcher_afk_a, "aw-watcher-afk", "aw-watcher-afk"),
     (aw_watcher_window_a, "aw-watcher-window", "aw-watcher-window"),
@@ -193,30 +168,6 @@ awa_coll = COLLECT(
     name="aw-watcher-afk",
 )
 
-aws_pyz = PYZ(aw_server_a.pure, aw_server_a.zipped_data, cipher=block_cipher)
-
-aws_exe = EXE(
-    aws_pyz,
-    aw_server_a.scripts,
-    exclude_binaries=True,
-    name="aw-server",
-    debug=False,
-    strip=False,
-    upx=True,
-    console=True,
-    entitlements_file=entitlements_file,
-    codesign_identity=codesign_identity,
-)
-aws_coll = COLLECT(
-    aws_exe,
-    aw_server_a.binaries,
-    aw_server_a.zipfiles,
-    aw_server_a.datas,
-    strip=False,
-    upx=True,
-    name="aw-server",
-)
-
 awq_pyz = PYZ(aw_qt_a.pure, aw_qt_a.zipped_data, cipher=block_cipher)
 awq_exe = EXE(
     awq_pyz,
@@ -246,7 +197,6 @@ if platform.system() == "Darwin":
         awq_coll,
         aww_coll,
         awa_coll,
-        aws_coll,
         name="KomuTracker.app",
         icon=icon,
         bundle_identifier="net.komutracker.KomuTracker",
