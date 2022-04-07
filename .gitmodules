@@ -4,9 +4,6 @@
 [submodule "aw-client"]
 	path = aw-client
 	url = https://github.com/nccasia/aw-client.git
-[submodule "aw-server"]
-	path = aw-server
-	url = https://github.com/nccasia/aw-server.git
 [submodule "aw-watcher-afk"]
 	path = aw-watcher-afk
 	url = https://github.com/nccasia/aw-watcher-afk.git
@@ -16,6 +13,3 @@
 [submodule "aw-watcher-window"]
 	path = aw-watcher-window
 	url = https://github.com/nccasia/aw-watcher-window.git
-[submodule "aw-server-rust"]
-	path = aw-server-rust
-	url = https://github.com/nccasia/aw-server-rust.git
