@@ -19,3 +19,6 @@ __pycache__
 # Misc
 .*cache
 .DS_Store
+
+#local_token
+auth.tracker
