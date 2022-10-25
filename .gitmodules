@@ -1,6 +1,3 @@
-[submodule "aw-core"]
-	path = aw-core
-	url = https://github.com/nccasia/aw-core.git
 [submodule "aw-client"]
 	path = aw-client
 	url = https://github.com/nccasia/aw-client.git
@@ -13,3 +10,4 @@
 [submodule "aw-watcher-window"]
 	path = aw-watcher-window
 	url = https://github.com/nccasia/aw-watcher-window.git
+
