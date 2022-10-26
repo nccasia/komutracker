@@ -1,5 +1,6 @@
 FROM python:3.8.13 
-        
+ENV MONGO_INITDB_ROOT_USERNAME=$var1
+ENV MONGO_INITDB_ROOT_PASSWORD=$var2
 WORKDIR /app
 
 RUN apt-get update 
@@ -24,7 +25,7 @@ RUN     git clone https://github.com/nccasia/aw-client.git &&\
         git clone https://github.com/nccasia/aw-watcher-afk.git &&\
         git clone https://github.com/nccasia/aw-watcher-window.git 
 COPY    aw-server aw-server
-COPY    aw-core aw-core 
+COPY    aw-core aw-core
 
 RUN     python3 -m venv venv &&\
         source /app/komutracker/venv/bin/activate &&\
