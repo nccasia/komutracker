@@ -12,9 +12,7 @@ services:
       image: mongo
       ports:
         - 27017:27017
-      # environment:
-      #   - MONGO_INITDB_ROOT_USERNAME=admin
-      #   - MONGO_INITDB_ROOT_PASSWORD=password 
+     
       volumes:
         - mongo-data:/data/db 
 volumes:
