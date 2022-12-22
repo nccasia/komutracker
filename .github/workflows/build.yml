@@ -182,19 +182,9 @@ jobs:
         working-directory: dist
       
       - name: Create Release
-        id: create-release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        uses: softproops/action-gh-release@v1
         with:
           tag_name: ${{github.run_number}}
           release_name: Release ${{github.run_number}}
-      - name: Upload release asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-        with:
-          upload_url: ${{steps.create-release.outputs.upload_url}}
-          asset_path: dist/komutracker-*.zip
-          asset_name: komutracker-v${{github.run_number}}.zip
-          asset_content_type: application/zip
+          files: dist/*/komutracker-*.zip
+          body: "A new release" 
