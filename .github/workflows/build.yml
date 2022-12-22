@@ -34,9 +34,8 @@ jobs:
         with:
           submodules: "recursive"
       # Needed for `git describe --tags --abbrev=0` to work (used for getting the latest version tag)
-      - name: Fetch full git history
-        run: git fetch --prune --unshallow --tags
-      - name: Set up Python
+      # - name: Fetch full git history
+      # name: Set up Python
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python_version }}
