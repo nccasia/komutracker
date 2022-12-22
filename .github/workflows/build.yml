@@ -167,9 +167,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download build artifacts
-       uses: actions/download-artifact@v3
-      with:
-        path: dist
+        uses: actions/download-artifact@v3
+        with:
+          path: dist
       - name: Display structure of downloaded files
         run: ls -R
         working-directory: dist
