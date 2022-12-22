@@ -2,9 +2,9 @@ name: Build
 
 on:
   push:
-    branches: [ master, release ]
+    branches: [master, release]
   pull_request:
-    branches: [ master ]
+    branches: [master]
   #release:
   #  types: [published]
 
@@ -30,55 +30,55 @@ jobs:
         #    node_version: 16
         #    experimental: true
     steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: 'recursive'
-    # Needed for `git describe --tags --abbrev=0` to work (used for getting the latest version tag)
-    - name: Fetch full git history
-      run: git fetch --prune --unshallow --tags
-    - name: Set up Python
-      uses: actions/setup-python@v1
-      with:
-        python-version: ${{ matrix.python_version }}
-    - name: Set up Node
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node_version }}
-    - name: Set up Rust nightly
-      uses: actions-rs/toolchain@v1
-      id: toolchain
-      with:
-        profile: minimal
-        toolchain: nightly
-        override: true
-    - name: Get npm cache dir
-      id: npm-cache-dir
-      run: |
-        echo "::set-output name=dir::$(npm config get cache)"
-    - uses: actions/cache@v1
-      name: Cache npm
-      env:
-        cache-name: node
-      with:
-        path: ${{ steps.npm-cache-dir.outputs.dir }}
-        key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-${{ env.cache-name }}-
-    - name: Cache cargo build
-      uses: actions/cache@v1
-      if: runner.os != 'macOS'  # cache doesn't seem to behave nicely on macOS, see: https://github.com/nccasia/aw-server-rust/issues/180
-      env:
-        cache-name: cargo-build-target
-      with:
-        path: aw-server-rust/target
-        # key needs to contain rustc_hash due to https://github.com/nccasia/aw-server-rust/issues/180
-        key: ${{ runner.os }}-${{ env.cache-name }}-${{ steps.toolchain.outputs.rustc_hash }}-${{ hashFiles('**/Cargo.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-${{ env.cache-name }}-${{ steps.toolchain.outputs.rustc_hash }}-
-    - name: Install APT dependencies
-      shell: bash
-      if: "startsWith(runner.os, 'linux')"
-      run: |
+      - uses: actions/checkout@v2
+        with:
+          submodules: "recursive"
+      # Needed for `git describe --tags --abbrev=0` to work (used for getting the latest version tag)
+      - name: Fetch full git history
+        run: git fetch --prune --unshallow --tags
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python_version }}
+      - name: Set up Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node_version }}
+      - name: Set up Rust nightly
+        uses: actions-rs/toolchain@v1
+        id: toolchain
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+      - name: Get npm cache dir
+        id: npm-cache-dir
+        run: |
+          echo "::set-output name=dir::$(npm config get cache)"
+      - uses: actions/cache@v1
+        name: Cache npm
+        env:
+          cache-name: node
+        with:
+          path: ${{ steps.npm-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.cache-name }}-
+      - name: Cache cargo build
+        uses: actions/cache@v1
+        if: runner.os != 'macOS' # cache doesn't seem to behave nicely on macOS, see: https://github.com/nccasia/aw-server-rust/issues/180
+        env:
+          cache-name: cargo-build-target
+        with:
+          path: aw-server-rust/target
+          # key needs to contain rustc_hash due to https://github.com/nccasia/aw-server-rust/issues/180
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ steps.toolchain.outputs.rustc_hash }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.cache-name }}-${{ steps.toolchain.outputs.rustc_hash }}-
+      - name: Install APT dependencies
+        shell: bash
+        if: "startsWith(runner.os, 'linux')"
+        run: |
           sudo apt-get update
           # Unsure which of these are actually necessary...
           sudo apt-get install -y \
@@ -98,85 +98,85 @@ jobs:
             libxrandr-dev \
             libxrender-dev
 
-    - name: Install dependencies
-      shell: bash
-      run: |
-        if [ "$RUNNER_OS" == "Windows" ]; then
-          choco install innosetup
-        fi
-        pip install poetry virtualenv
-    - name: Build
-      shell: bash
-      run: |
-        python -m virtualenv venv
-        source venv/bin/activate || source venv/Scripts/activate
-        poetry install
-        make build
-    - name: Run tests
-      shell: bash
-      run: |
-        source venv/bin/activate || source venv/Scripts/activate
-        make test
+      - name: Install dependencies
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            choco install innosetup
+          fi
+          pip install poetry virtualenv
+      - name: Build
+        shell: bash
+        run: |
+          python -m virtualenv venv
+          source venv/bin/activate || source venv/Scripts/activate
+          poetry install
+          make build
+      - name: Run tests
+        shell: bash
+        run: |
+          source venv/bin/activate || source venv/Scripts/activate
+          make test
 
-    # Don't run integration tests on Windows, doesn't work for some reason
-    - name: Run integration tests
-      if: "!startsWith(runner.os, 'windows')"
-      run: |
-        source venv/bin/activate || source venv/Scripts/activate
-        make test-integration
+      # Don't run integration tests on Windows, doesn't work for some reason
+      - name: Run integration tests
+        if: "!startsWith(runner.os, 'windows')"
+        run: |
+          source venv/bin/activate || source venv/Scripts/activate
+          make test-integration
 
-    - name: Package
-      shell: bash
-      run: |
-        source venv/bin/activate || source venv/Scripts/activate
-        poetry install  # run again to ensure we have the correct version of PyInstaller
-        make package
+      - name: Package
+        shell: bash
+        run: |
+          source venv/bin/activate || source venv/Scripts/activate
+          poetry install  # run again to ensure we have the correct version of PyInstaller
+          make package
 
-    - name: Package dmg
-      if: startsWith(runner.os, 'macOS')
-      run: |
-        # Load certificates
-        # TODO: Only load key & sign if env vars for signing exists
-        ./scripts/ci/import-macos-p12.sh
+      - name: Package dmg
+        if: startsWith(runner.os, 'macOS')
+        run: |
+          # Load certificates
+          # TODO: Only load key & sign if env vars for signing exists
+          ./scripts/ci/import-macos-p12.sh
 
-        # Build .app and .dmg
-        source venv/bin/activate
-        make dist/KomuTracker.dmg
-        codesign --verbose -s ${APPLE_PERSONALID} dist/KomuTracker.dmg
+          # Build .app and .dmg
+          source venv/bin/activate
+          make dist/KomuTracker.dmg
+          codesign --verbose -s ${APPLE_PERSONALID} dist/KomuTracker.dmg
 
-        # Run prechecks
-        brew install akeru-inc/tap/xcnotary
-        xcnotary precheck dist/KomuTracker.app
-        xcnotary precheck dist/KomuTracker.dmg
+          # Run prechecks
+          brew install akeru-inc/tap/xcnotary
+          xcnotary precheck dist/KomuTracker.app
+          xcnotary precheck dist/KomuTracker.dmg
 
-        # Notarize
-        make dist/notarize
-        mv dist/KomuTracker.dmg dist/komutracker-$(scripts/package/getversion.sh)-macos-x86_64.dmg
-      env:
-        APPLE_EMAIL: ${{ secrets.APPLE_EMAIL }}
-        APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-        APPLE_PERSONALID: ${{ secrets.APPLE_TEAMID }} # APPLE_PERSONAL_ID == APPLE_TEAM_ID for personal accounts
-        APPLE_TEAMID: ${{ secrets.APPLE_TEAMID }}
-        CERTIFICATE_MACOS_P12_BASE64: ${{ secrets.CERTIFICATE_MACOS_P12_BASE64 }}
-        CERTIFICATE_MACOS_P12_PASSWORD: ${{ secrets.CERTIFICATE_MACOS_P12_PASSWORD }}
+          # Notarize
+          make dist/notarize
+          mv dist/KomuTracker.dmg dist/komutracker-$(scripts/package/getversion.sh)-macos-x86_64.dmg
+        env:
+          APPLE_EMAIL: ${{ secrets.APPLE_EMAIL }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_PERSONALID: ${{ secrets.APPLE_TEAMID }} # APPLE_PERSONAL_ID == APPLE_TEAM_ID for personal accounts
+          APPLE_TEAMID: ${{ secrets.APPLE_TEAMID }}
+          CERTIFICATE_MACOS_P12_BASE64: ${{ secrets.CERTIFICATE_MACOS_P12_BASE64 }}
+          CERTIFICATE_MACOS_P12_PASSWORD: ${{ secrets.CERTIFICATE_MACOS_P12_PASSWORD }}
 
-    - name: Upload packages
-      uses: actions/upload-artifact@v3
-      with:
-        name: builds-${{ runner.os }}-py${{ matrix.python_version }}
-        path: dist/komutracker-*.*
+      - name: Upload packages
+        uses: actions/upload-artifact@v3
+        with:
+          name: builds-${{ runner.os }}-py${{ matrix.python_version }}
+          path: dist/komutracker-*.*
   release:
     needs: [build]
     runs-on: ubuntu-latest
     steps:
       - name: Download build artifacts
-      - uses: actions/download-artifact@v3
-      with:
-        path: dist
+        uses: actions/download-artifact@v3
+        with:
+          path: dist
       - name: Display structure of downloaded files
         run: ls -R
         working-directory: dist
-      
+
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
