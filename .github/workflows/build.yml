@@ -182,7 +182,7 @@ jobs:
         working-directory: dist
       
       - name: Create Release
-        uses: softproops/action-gh-release@v1
+        uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{github.run_number}}
           release_name: Release ${{github.run_number}}
