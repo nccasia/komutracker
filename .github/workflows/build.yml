@@ -2,7 +2,7 @@ name: Build
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, release ]
   pull_request:
     branches: [ master ]
   #release:
@@ -161,8 +161,23 @@ jobs:
         CERTIFICATE_MACOS_P12_PASSWORD: ${{ secrets.CERTIFICATE_MACOS_P12_PASSWORD }}
 
     - name: Upload packages
-      uses: actions/upload-artifact@v2-preview
+      uses: actions/upload-artifact@v3
       with:
         name: builds-${{ runner.os }}-py${{ matrix.python_version }}
         path: dist/komutracker-*.*
-
+  release:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download build artifacts
+      - uses: actions/download-artifact@v3
+      with:
+        path: dist
+      - name: Display structure of downloaded files
+        run: ls -R
+        working-directory: dist
+      
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/*/komutracker-*.*
