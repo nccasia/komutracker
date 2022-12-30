@@ -43,9 +43,11 @@ jobs:
     - name: Checkout submodules
       run: |
           cd ./aw-client
+          git fetch
           git checkout request_exceptions
           cd ..
           cd ./aw-qt
+          git fetch
           git checkout feature/noti
           cd ..
     - name: Set up Python
