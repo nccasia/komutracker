@@ -173,8 +173,8 @@ def summary_repo(path: str, commitrange: str, filter_types: List[str]) -> str:
 
 
 def build(filter_types=["build", "ci", "tests"]):
-    # prev_release = run("git describe --tags --abbrev=0").strip()
-    prev_release = "v0.11.0"
+    prev_release = run("git describe --tags --abbrev=0").strip()
+    # prev_release = "release"
     next_release = "master"
     output = summary_repo(
         ".", commitrange=f"{prev_release}...{next_release}", filter_types=filter_types
