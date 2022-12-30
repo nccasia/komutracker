@@ -78,7 +78,8 @@ class Commit:
 
 
 def run(cmd, cwd=".") -> str:
-    p = _run(shlex.split(cmd), stdout=PIPE, stderr=STDOUT, encoding="utf8", cwd=cwd)
+    p = _run(shlex.split(cmd), stdout=PIPE,
+             stderr=STDOUT, encoding="utf8", cwd=cwd)
     if p.returncode != 0:
         print(p.stdout)
         print(p.stderr)
@@ -116,7 +117,8 @@ def summary_repo(path: str, commitrange: str, filter_types: List[str]) -> str:
     fixes = ""
     misc = ""
 
-    summary_bundle = run(f"git log {commitrange} --oneline --no-decorate", cwd=path)
+    summary_bundle = run(
+        f"git log {commitrange} --oneline --no-decorate", cwd=path)
     for line in summary_bundle.split("\n"):
         if line:
             commit = Commit(
@@ -125,7 +127,7 @@ def summary_repo(path: str, commitrange: str, filter_types: List[str]) -> str:
                 repo=dirname,
             )
 
-            entry = f"\n - {commit.format()}"
+            entry = f"\n\n - {commit.format()}"
             if commit.type == "feat":
                 feats += entry
             elif commit.type == "fix":
@@ -133,7 +135,7 @@ def summary_repo(path: str, commitrange: str, filter_types: List[str]) -> str:
             elif commit.type not in filter_types:
                 misc += entry
 
-    for name, entries in (("✨ Features", feats), ("🐛 Fixes", fixes), ("🔨 Misc", misc)):
+    for name, entries in (("Features", feats), ("Fixes", fixes), ("Misc", misc)):
         if entries:
             _count = len(entries.strip().split("\n"))
             title = f"{name} ({_count})"
