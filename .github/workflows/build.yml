@@ -36,6 +36,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
+        ref: ${{github.ref}}
         submodules: 'recursive'
     - name: Set up Python
       uses: actions/setup-python@v1
@@ -169,6 +170,16 @@ jobs:
       with:
         name: builds-${{ runner.os }}-py${{ matrix.python_version }}
         path: dist/komutracker-*.*
+    
+    - name: Generate release_note
+      run: ./script/build_changelog.py > changelog.md
+
+    - name: Upload release note
+      uses: actions/upload-artifact@v3
+      with:
+        name: changelog
+        path: changelog.md
+
   release:
     needs: [build]
     runs-on: ubuntu-latest
@@ -187,4 +198,4 @@ jobs:
           tag_name: ${{github.run_number}}
           release_name: Release ${{github.run_number}}
           files: dist/*/komutracker-*.zip
-          body: "A new release" 
+          body_path: dist/changelog/changelog.md
