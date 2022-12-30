@@ -39,12 +39,15 @@ jobs:
     - uses: actions/checkout@v2
       with:
         ref: ${{github.ref}}
-        run: |
-          cd ./aw-qt
-          git checkout noti/feature
-          cd ..
+        submodules: 'recursive'
+    - name: Checkout submodules
+      run: |
           cd ./aw-client
           git checkout request_exceptions
+          cd ..
+          cd ./aw-qt
+          git checkout feature/noti
+          cd ..
     - name: Set up Python
       uses: actions/setup-python@v1
       with:
