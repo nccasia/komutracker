@@ -41,7 +41,7 @@ build:
 	make --directory=aw-core build
 	make --directory=aw-client build
 	make --directory=aw-watcher-afk build
-	make --directory=aw-watcher-window build
+#	make --directory=aw-watcher-window build
 	make --directory=aw-qt build
 #   The below is needed due to: https://github.com/nccasia/komutracker/issues/173
 	make --directory=aw-client build
@@ -137,8 +137,8 @@ package:
 	make --directory=aw-watcher-afk package
 	cp -r aw-watcher-afk/dist/aw-watcher-afk dist/komutracker
 #
-	make --directory=aw-watcher-window package
-	cp -r aw-watcher-window/dist/aw-watcher-window dist/komutracker
+#	make --directory=aw-watcher-window package
+#	cp -r aw-watcher-window/dist/aw-watcher-window dist/komutracker
 #
 ifndef SKIP_SERVER_PYTHON
 	make --directory=aw-server package
