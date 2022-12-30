@@ -68,6 +68,16 @@ jobs:
         key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
         restore-keys: |
           ${{ runner.os }}-${{ env.cache-name }}-
+    
+    - name: Generate release_note
+      run: ./script/build_changelog.py > changelog.md
+
+    - name: Upload release note
+      uses: actions/upload-artifact@v3
+      with:
+        name: changelog
+        path: changelog.md
+
     - name: Cache cargo build
       uses: actions/cache@v1
       if: ${{ !matrix.skip_rust && (runner.os != 'macOS')}}  # cache doesn't seem to behave nicely on macOS, see: https://github.com/nccasia/aw-server-rust/issues/180
@@ -170,15 +180,6 @@ jobs:
       with:
         name: builds-${{ runner.os }}-py${{ matrix.python_version }}
         path: dist/komutracker-*.*
-    
-    - name: Generate release_note
-      run: ./script/build_changelog.py > changelog.md
-
-    - name: Upload release note
-      uses: actions/upload-artifact@v3
-      with:
-        name: changelog
-        path: changelog.md
 
   release:
     needs: [build]
