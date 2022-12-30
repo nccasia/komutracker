@@ -70,7 +70,7 @@ jobs:
           ${{ runner.os }}-${{ env.cache-name }}-
     
     - name: Generate release_note
-      run: ./script/build_changelog.py > changelog.md
+      run: ./scripts/build_changelog.py > changelog.md
 
     - name: Upload release note
       uses: actions/upload-artifact@v3
