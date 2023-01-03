@@ -45,6 +45,7 @@ jobs:
           git submodule update --recursive --remote
           cd ./aw-client
           git fetch
+          git branch -a
           git checkout request_exceptions
           cd ..
           cd ./aw-qt
