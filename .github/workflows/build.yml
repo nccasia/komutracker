@@ -23,7 +23,7 @@ jobs:
       fail-fast: false
       matrix:
         # os: [ubuntu-latest, windows-latest, macOS-latest]
-        os: [windows-latest]
+        os: [windows-latest, ubuntu-latest, macOS-latest]
         python_version: [3.8]
         node_version: [16]
         experimental: [false]
@@ -40,18 +40,6 @@ jobs:
       with:
         ref: ${{github.ref}}
         submodules: 'recursive'
-    - name: Checkout submodules
-      run: |
-          git submodule update --recursive --remote
-          cd ./aw-client
-          git fetch
-          git branch -a
-          git checkout request_exceptions
-          cd ..
-          cd ./aw-qt
-          git fetch
-          git checkout feature/noti
-          cd ..
     - name: Set up Python
       uses: actions/setup-python@v1
       with:
@@ -149,7 +137,7 @@ jobs:
 
     # Don't run integration tests on Windows, doesn't work for some reason
     - name: Run integration tests
-      if: "!startsWith(runner.os, 'windows')"
+      if: ${{!matrix.skip_test}} and "!startsWith(runner.os, 'windows')"
       run: |
         source venv/bin/activate || source venv/Scripts/activate
         make test-integration
