@@ -41,13 +41,26 @@ jobs:
         ref: ${{github.ref}}
         submodules: 'recursive'
     - name: Set up Python
+      if: runner.os != 'macOS'
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python_version }}
+     - name: Set up Python for macOS
+      if: runner.os == 'macOS'
+      run: |
+        curl https://www.python.org/ftp/python/${PYTHON_VERSION}/python-${PYTHON_VERSION}-macosx10.9.pkg -o "python.pkg"
+        sudo installer -pkg python.pkg -target /
+        echo "/Library/Frameworks/Python.framework/Versions/${{ matrix.python_version }}/bin" >> $GITHUB_PATH
+        "/Applications/Python ${{ matrix.python_version }}/Install Certificates.command"
+      env:
+        # Add the patch number to the Python version (for FTP download link)
+        PYTHON_VERSION: ${{ matrix.python_version }}.13
+  
     - name: Set up Node
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node_version }}
+  
     - name: Set up Rust nightly
       if: ${{!matrix.skip_rust}}
       uses: actions-rs/toolchain@v1
@@ -56,10 +69,12 @@ jobs:
         profile: minimal
         toolchain: nightly
         override: true
+
     - name: Get npm cache dir
       id: npm-cache-dir
       run: |
         echo "::set-output name=dir::$(npm config get cache)"
+
     - uses: actions/cache@v1
       name: Cache npm
       if: ${{!matrix.skip_webui}}
@@ -123,6 +138,7 @@ jobs:
           choco install innosetup
         fi
         pip install poetry virtualenv
+
     - name: Build
       shell: bash
       run: |
@@ -130,6 +146,7 @@ jobs:
         source venv/bin/activate || source venv/Scripts/activate
         poetry install
         make build
+
     - name: Run tests
       if: ${{!matrix.skip_test}}
       shell: bash
