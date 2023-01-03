@@ -42,6 +42,7 @@ jobs:
         submodules: 'recursive'
     - name: Checkout submodules
       run: |
+          git submodule update --recursive --remote
           cd ./aw-client
           git fetch
           git checkout request_exceptions
