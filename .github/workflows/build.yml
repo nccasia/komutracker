@@ -45,7 +45,7 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python_version }}
-     - name: Set up Python for macOS
+    - name: Set up Python for macOS
       if: runner.os == 'macOS'
       run: |
         curl https://www.python.org/ftp/python/${PYTHON_VERSION}/python-${PYTHON_VERSION}-macosx10.9.pkg -o "python.pkg"
