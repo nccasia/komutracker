@@ -36,7 +36,7 @@ build:
 #
 #	needed due to https://github.com/pypa/setuptools/issues/1963
 #	would ordinarily be specified in pyproject.toml, but is not respected due to https://github.com/pypa/setuptools/issues/1963
-	pip install 'setuptools>49.1.1'
+	pip install 'setuptools==65'
 #
 	make --directory=aw-core build
 	make --directory=aw-client build
