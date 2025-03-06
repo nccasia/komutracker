@@ -28,11 +28,6 @@ SHELL := /usr/bin/env bash
 #    packages as user packages (same as `pip install --user <pkg>`). This makes
 #    it possible to install without using a virtualenv (or root).
 build:
-	if [ -e "aw-core/.git" ]; then \
-		echo "Submodules seem to already be initialized, continuing..."; \
-	else \
-		git submodule update --init --recursive; \
-	fi
 #
 #	needed due to https://github.com/pypa/setuptools/issues/1963
 #	would ordinarily be specified in pyproject.toml, but is not respected due to https://github.com/pypa/setuptools/issues/1963
@@ -63,9 +58,14 @@ install:
 # ------
 #
 # Pulls the latest version, updates all the submodules, then runs `make build`.
-update:
+pull:
 	git pull
 	git submodule update --init --recursive
+	git submodule foreach --recursive git checkout master
+	git submodule foreach --recursive git pull
+
+update:
+	make pull
 	make build
 
 
