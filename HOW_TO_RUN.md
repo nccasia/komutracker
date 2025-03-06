@@ -25,6 +25,24 @@ Run `make pull`
     autostart_modules = ["aw-watcher-afk", "aw-watcher-window"]
     ```
 
+2. Edit `config.py` config file at: `aw-client\aw_client\config.py`. Sample:
+    ```toml
+    [server]
+    hostname = "tracker.komu.vn"
+    port = "5600"
+    secret = "secret"
+
+    [client]
+    commit_interval = 300
+
+    [server-testing]
+    hostname = "127.0.0.1"
+    port = "5666"
+
+    [client-testing]
+    commit_interval = 5
+    ```
+
 2. Build the project:
     ```sh
     make build
