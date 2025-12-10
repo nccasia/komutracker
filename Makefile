@@ -33,13 +33,20 @@ build:
 #	would ordinarily be specified in pyproject.toml, but is not respected due to https://github.com/pypa/setuptools/issues/1963
 	pip install 'setuptools==65'
 #
+	pip install -U packaging
 	make --directory=aw-core build
+	pip install -U packaging
 	make --directory=aw-client build
+	pip install -U packaging
 	make --directory=aw-watcher-afk build
+	pip install -U packaging
 	make --directory=aw-watcher-window build
+	pip install -U packaging
 	make --directory=aw-qt build
+	pip install -U packaging
 #   The below is needed due to: https://github.com/nccasia/komutracker/issues/173
 	make --directory=aw-client build
+	pip install -U packaging
 	make --directory=aw-core build
 
 
