@@ -75,9 +75,105 @@ function build_setup() {
     echo "Setup built!"
 }
 
+function build_deb() {
+    echo "Building .deb package..."
+
+    app_name="komutracker"
+    package_root="dist/komutracker-deb"
+    install_dir="/opt/$app_name"
+
+    filename="${app_name}-${version}-${platform}-${arch}.deb"
+
+    echo "Name of package will be: $filename"
+
+    # Cleanup
+    rm -rf "$package_root"
+
+    # Create folders
+    mkdir -p "$package_root/DEBIAN"
+    mkdir -p "$package_root$install_dir"
+    mkdir -p "$package_root/usr/bin"
+    mkdir -p "$package_root/usr/share/applications"
+    mkdir -p "$package_root/usr/share/icons/hicolor/256x256/apps"
+
+    echo "Copying application files..."
+
+    cp -r dist/komutracker/* "$package_root$install_dir/"
+
+    echo "Creating launcher..."
+
+    cat > "$package_root/usr/bin/$app_name" <<EOF
+#!/bin/bash
+cd $install_dir
+exec ./aw-qt "\$@"
+EOF
+
+    chmod +x "$package_root/usr/bin/$app_name"
+
+    echo "Creating desktop entry..."
+
+    cat > "$package_root/usr/share/applications/$app_name.desktop" <<EOF
+[Desktop Entry]
+Name=KomuTracker
+GenericName=Time-tracking application
+Comment=Open source time-tracking application with a focus on extensibility and privacy.
+Hidden=false
+Exec=/usr/bin/$app_name
+StartupNotify=true
+X-GNOME-Autostart-enabled=true
+Icon=$app_name
+Type=Application
+Categories=Utility;
+Terminal=false
+
+EOF
+    # echo "Creating desktop entry..."
+
+    # cp aw-qt/resources/aw-qt.desktop "$package_root/usr/share/applications/$app_name.desktop"
+
+    # Optional icon
+    if [ -f "aw-qt/media/logo/logo.png" ]; then
+        cp aw-qt/media/logo/logo.png \
+        "$package_root/usr/share/icons/hicolor/256x256/apps/$app_name.png"
+    fi
+
+    echo "Creating control file..."
+
+    cat > "$package_root/DEBIAN/control" <<EOF
+Package: $app_name
+Version: $version
+Section: utils
+Architecture: amd64
+Maintainer: Duy Nguyen <hoangduy06104@gmail.com>
+Depends: libc6,
+ libglib2.0-0,
+ libxcb-cursor0,
+ libxcb-xinerama0,
+ libxkbcommon-x11-0,
+ libxcb-icccm4,
+ libxcb-image0,
+ libxcb-keysyms1,
+ libxcb-render-util0
+Description: KomuTracker desktop application
+ Activity tracking application built with PyQt5.
+EOF
+
+    chmod 755 "$package_root/DEBIAN"
+    chmod 644 "$package_root/DEBIAN/control"
+
+    echo "Building deb..."
+
+    dpkg-deb --build "$package_root" "dist/$filename"
+
+    echo ".deb package built!"
+}
+
 build_zip
 if [[ $platform == "windows"* ]]; then
     build_setup
+fi
+if [[ $platform == "linux"* ]]; then
+    build_deb
 fi
 
 echo
