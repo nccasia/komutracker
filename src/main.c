@@ -165,9 +165,11 @@ int main(int argc, char **argv) {
        lock before detaching so a duplicate launch is reported to the terminal. */
     int lock_status = instance_lock();
     if (lock_status != 0) {
-        fprintf(stderr, lock_status > 0
-                            ? "Another komutracker instance is already running\n"
-                            : "Failed to acquire instance lock\n");
+        if (lock_status < 0) {
+            fprintf(stderr, "Failed to acquire instance lock\n");
+        } else if (verbose) {
+            fprintf(stderr, "Another komutracker instance is already running\n");
+        }
         http_global_cleanup();
         return 1;
     }
