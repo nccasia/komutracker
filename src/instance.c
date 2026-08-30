@@ -30,10 +30,9 @@ static int pid_path(char *out, size_t size) {
     if (!value) return -1;
     return snprintf(out, size, "%s/Library/Caches/komutracker/tracker.pid", value) >= (int)size ? -1 : 0;
 #else
-    const char *xdg = getenv("XDG_CACHE_HOME");
-    const char *value = xdg && *xdg ? xdg : getenv("HOME");
+    const char *value = getenv("HOME");
     if (!value) return -1;
-    return snprintf(out, size, "%s%ckomutracker%ctracker.pid", value, PATH_SEP, PATH_SEP) >= (int)size ? -1 : 0;
+    return snprintf(out, size, "%s%c.komutracker%ctracker.pid", value, PATH_SEP, PATH_SEP) >= (int)size ? -1 : 0;
 #endif
 }
 
@@ -75,15 +74,29 @@ static int lock_fd = -1;
 
 int instance_lock(void) {
     char path[2048];
-    if (pid_path(path, sizeof(path))) return -1;
-    if (dirs_create_parent(path)) return -1;
+    if (pid_path(path, sizeof(path))) {
+        fprintf(stderr, "Cannot acquire instance lock: cache directory is not set ($HOME)\n");
+        return -1;
+    }
+    if (dirs_create_parent(path)) {
+        fprintf(stderr, "Cannot acquire instance lock: cannot create parent directory for %s: %s\n",
+                path, strerror(errno));
+        return -1;
+    }
     int fd = open(path, O_CREAT | O_RDWR, 0600);
-    if (fd < 0) return -1;
+    if (fd < 0) {
+        fprintf(stderr, "Cannot acquire instance lock: cannot open %s: %s\n", path, strerror(errno));
+        return -1;
+    }
     if (flock(fd, LOCK_EX | LOCK_NB) != 0) {
         close(fd);
         return 1;
     }
-    if (ftruncate(fd, 0) != 0) { close(fd); return -1; }
+    if (ftruncate(fd, 0) != 0) {
+        fprintf(stderr, "Cannot acquire instance lock: cannot truncate %s: %s\n", path, strerror(errno));
+        close(fd);
+        return -1;
+    }
     char pid[16];
     int n = snprintf(pid, sizeof(pid), "%d\n", (int)getpid());
     if (n > 0) {

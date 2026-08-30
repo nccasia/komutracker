@@ -185,10 +185,10 @@ Pass `-d` or `--daemon` to detach the process and keep tracking in the backgroun
 ./build/komutracker --daemon
 ```
 
-The process double-forks, reparents to init, redirects its standard streams, and writes its PID to `~/.cache/komutracker/tracker.pid`. To stop it, send it a signal (or use `systemd`/your service manager):
+The process double-forks, reparents to init, redirects its standard streams, and writes its PID to `~/.komutracker/tracker.pid`. The directory is created automatically if it does not exist. To stop it, send it a signal (or use `systemd`/your service manager):
 
 ```bash
-kill "$(cat ~/.cache/komutracker/tracker.pid)"
+kill "$(cat ~/.komutracker/tracker.pid)"
 ```
 
 Only one instance runs at a time. Launching the command again while another instance is already tracking exits immediately with `Another komutracker instance is already running`. The lock is released automatically if the process crashes.
