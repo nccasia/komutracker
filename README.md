@@ -189,7 +189,7 @@ Stop the tracker with `Ctrl+C`.
 --client-id ID        OAuth client ID
 --redirect-uri URL    Remote OAuth callback URL
 --testing             Use testing defaults
--v, --verbose         Additionally print HTTP transport errors (URL + reason)
+-v, --verbose         Additionally print transport errors, the logged-in user, and bucket names
 --version, -V         Print the komutracker version and exit
 --timeout SECONDS     Idle time before AFK status
 --poll-time SECONDS   AFK polling interval
@@ -236,6 +236,8 @@ The exact HTTP error reason for a failed request (timeout, bad status, etc.) is 
 ./build/komutracker --verbose
 ```
 
+With `-v`/`--verbose`, the CLI additionally logs the authenticated user (`logged in as <name> <<email>>`) and the two bucket names (`afk bucket: …`, `foreground-process bucket: …`) at startup.
+
 Check the version:
 
 ```bash
@@ -245,10 +247,10 @@ Check the version:
 
 ## Data sent
 
-The combined process publishes two buckets:
+The combined process publishes two buckets, named after the authenticated username (the part of the email before `@`, e.g. `nguyentran`):
 
-- `aw-watcher-afk_<hostname>` / `afkstatus`: `afk` or `not-afk`.
-- `aw-watcher-window_<hostname>` / `currentwindow`: the focused process in `app` and its window title in `title`.
+- `aw-watcher-afk_<username>` / `afkstatus`: `afk` or `not-afk`.
+- `aw-watcher-window_<username>` / `currentwindow`: the focused process in `app` and its window title in `title`.
 
 Only the foreground process is sent. Background process lists are never collected. Use `--exclude-title` to avoid sending window titles:
 
