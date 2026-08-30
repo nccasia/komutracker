@@ -27,7 +27,7 @@ static void usage(const char *program) {
         "  [--server URL] [--token TOKEN] [--device-id ID] [--timeout SEC]\n"
         "  [--poll-time SEC] [--window-poll-time SEC] [--exclude-title]\n"
         "  [--auth-url URL] [--client-id ID]\n"
-        "  [--redirect-uri URL] [--auth-timeout SEC]\n", program);
+        "  [--redirect-uri URL] [--auth-timeout SEC] [--version]\n", program);
 }
 
 static double now_seconds(void) {
@@ -49,9 +49,14 @@ static int get_hostname(char *buffer, size_t size) {
 #endif
 }
 
+static void log_send(const char *event, int result) {
+    fprintf(stderr, "komutracker %s: %s %s\n", KOMUTRACKER_VERSION, event,
+            result == 0 ? "sent" : "send failed");
+}
+
 int main(int argc, char **argv) {
     bool testing = false, verbose = false, login = false, logout = false, status = false, no_browser = false;
-    bool exclude_title = false;
+    bool exclude_title = false, version = false;
     double timeout = 180.0, poll_time = 5.0, window_poll_time = 1.0;
     int auth_timeout = getenv("AW_AUTH_TIMEOUT") ? atoi(getenv("AW_AUTH_TIMEOUT")) : 300;
     const char *server = getenv("AW_SERVER_URL"), *token_arg = getenv("AW_AUTH_TOKEN");
@@ -68,6 +73,7 @@ int main(int argc, char **argv) {
         else if (!strcmp(argv[i], "--status")) status = true;
         else if (!strcmp(argv[i], "--no-browser")) no_browser = true;
         else if (!strcmp(argv[i], "--exclude-title")) exclude_title = true;
+        else if (!strcmp(argv[i], "--version") || !strcmp(argv[i], "-V")) version = true;
         else if (!strcmp(argv[i], "--timeout") && i + 1 < argc) timeout = strtod(argv[++i], NULL);
         else if (!strcmp(argv[i], "--poll-time") && i + 1 < argc) poll_time = strtod(argv[++i], NULL);
         else if (!strcmp(argv[i], "--window-poll-time") && i + 1 < argc) window_poll_time = strtod(argv[++i], NULL);
@@ -81,6 +87,7 @@ int main(int argc, char **argv) {
         else { usage(argv[0]); return 2; }
     }
     if ((login ? 1 : 0) + (logout ? 1 : 0) + (status ? 1 : 0) > 1) { usage(argv[0]); return 2; }
+    if (version) { printf("komutracker %s\n", KOMUTRACKER_VERSION); return 0; }
     if (testing) { timeout = 20.0; poll_time = 1.0; }
     if (!server) server = testing ? "http://127.0.0.1:5666" : "https://tracker-api.komu.vn";
     if (!auth_url) auth_url = "https://oauth2.mezon.ai";
@@ -143,7 +150,7 @@ int main(int argc, char **argv) {
 
     bool afk = false;
     double next_afk = now_seconds(), next_window = next_afk;
-    fprintf(stderr, "tracker-afk started for %s\n", server);
+    fprintf(stderr, "komutracker %s started for %s\n", KOMUTRACKER_VERSION, server);
     while (running) {
         double now = now_seconds();
         if (window_available && now >= next_window) {
@@ -153,9 +160,11 @@ int main(int argc, char **argv) {
             }
             if (exclude_title) strcpy(foreground.title, "excluded");
             char timestamp[32];
-            if (!afk_format_timestamp(timestamp, sizeof(timestamp), now))
-                http_heartbeat_window(&client, window_bucket, timestamp, foreground.app,
-                                      foreground.title, window_poll_time + 1.0);
+            if (!afk_format_timestamp(timestamp, sizeof(timestamp), now)) {
+                int result = http_heartbeat_window(&client, window_bucket, timestamp, foreground.app,
+                                                   foreground.title, window_poll_time + 1.0);
+                log_send("foreground-process heartbeat", result);
+            }
             next_window = now + window_poll_time;
         }
 
@@ -167,11 +176,11 @@ int main(int argc, char **argv) {
                 char timestamp[32];
                 if (sample.changed) {
                     if (!afk_format_timestamp(timestamp, sizeof(timestamp), last_input))
-                        http_heartbeat(&client, afk_bucket, timestamp, 0, afk, timeout + poll_time);
+                        log_send("afk heartbeat", http_heartbeat(&client, afk_bucket, timestamp, 0, afk, timeout + poll_time));
                     if (!afk_format_timestamp(timestamp, sizeof(timestamp), last_input + 0.001))
-                        http_heartbeat(&client, afk_bucket, timestamp, sample.duration, sample.afk, timeout + poll_time);
+                        log_send("afk heartbeat", http_heartbeat(&client, afk_bucket, timestamp, sample.duration, sample.afk, timeout + poll_time));
                 } else if (!afk_format_timestamp(timestamp, sizeof(timestamp), last_input))
-                    http_heartbeat(&client, afk_bucket, timestamp, sample.duration, sample.afk, timeout + poll_time);
+                    log_send("afk heartbeat", http_heartbeat(&client, afk_bucket, timestamp, sample.duration, sample.afk, timeout + poll_time));
                 afk = sample.afk;
             }
             next_afk = now + poll_time;

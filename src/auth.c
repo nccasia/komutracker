@@ -143,14 +143,23 @@ int auth_login(http_client *client, const auth_options *options, char *token, si
         fprintf(stderr, "Unable to open a browser; open the URL manually\n");
 
     int waited = 0;
+    int attempt = 0;
     while (*running && waited < options->timeout_seconds) {
+        attempt++;
         int result = http_auth_poll(client, token, token_size);
         if (result == HTTP_AUTH_OK) {
+            fprintf(stderr, "komutracker %s: authentication poll attempt %d succeeded\n",
+                    KOMUTRACKER_VERSION, attempt);
             if (auth_save_token(token)) return -1;
             client->token = token;
             return http_auth_me(client, NULL, 0, NULL, 0) == HTTP_AUTH_OK ? 0 : -1;
         }
-        if (result == HTTP_AUTH_ERROR) return -1;
+        if (result == HTTP_AUTH_ERROR) {
+            fprintf(stderr, "komutracker %s: authentication poll failed\n", KOMUTRACKER_VERSION);
+            return -1;
+        }
+        fprintf(stderr, "komutracker %s: authentication poll attempt %d pending\n",
+                KOMUTRACKER_VERSION, attempt);
         for (int tenth = 0; tenth < 20 && *running; tenth++) {
 #ifdef _WIN32
             Sleep(100);

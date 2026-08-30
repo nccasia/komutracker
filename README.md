@@ -1,4 +1,4 @@
-# tracker-afk
+# komutracker
 
 Native command-line activity tracker written in C. One process detects AFK state and the process owning the currently focused window, then sends ActivityWatch-compatible heartbeats to separate server buckets. It does not enumerate all running processes and has no GUI.
 
@@ -78,7 +78,7 @@ The Linux implementation currently requires an X11 display. A Wayland session wi
 ## Build
 
 ```bash
-cd /mnt/nccasia/tracker-afk
+cd /mnt/nccasia/komutracker
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ```
@@ -189,7 +189,8 @@ Stop the tracker with `Ctrl+C`.
 --client-id ID        OAuth client ID
 --redirect-uri URL    Remote OAuth callback URL
 --testing             Use testing defaults
--v, --verbose         Print diagnostic HTTP errors
+-v, --verbose         Additionally print HTTP transport errors (URL + reason)
+--version, -V         Print the komutracker version and exit
 --timeout SECONDS     Idle time before AFK status
 --poll-time SECONDS   AFK polling interval
 --window-poll-time SEC Foreground-process polling interval; default: 1
@@ -219,6 +220,27 @@ AW_AUTH_URL
 AW_CLIENT_ID
 AW_REDIRECT_URI
 AW_AUTH_TIMEOUT
+```
+
+## Logs
+
+The CLI prints progress to the screen, prefixed with the version, e.g. `komutracker 1.0.0:`. It logs:
+
+- **startup** — `komutracker 1.0.0 started for <server>`.
+- **authentication polling** — each poll of the token endpoint logs `authentication poll attempt N pending`, `… succeeded`, or `… failed` while waiting for the browser login to finish.
+- **data sends** — each window heartbeat logs `foreground-process heartbeat sent` (or `send failed`) and each AFK heartbeat logs `afk heartbeat sent` (or `send failed`).
+
+The exact HTTP error reason for a failed request (timeout, bad status, etc.) is only printed with `-v`/`--verbose`:
+
+```bash
+./build/komutracker --verbose
+```
+
+Check the version:
+
+```bash
+./build/komutracker --version
+# komutracker 1.0.0
 ```
 
 ## Data sent
