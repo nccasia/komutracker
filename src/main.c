@@ -20,6 +20,7 @@
 
 static volatile sig_atomic_t running = 1;
 static void stop(int signal_number) { (void)signal_number; running = 0; }
+static bool verbose_logging;
 
 static void usage(const char *program) {
     fprintf(stderr,
@@ -61,6 +62,7 @@ static int get_hostname(char *buffer, size_t size) {
 }
 
 static void log_send(const char *event, int result) {
+    if (!verbose_logging) return;
     char stamp[16];
     if (now_local(stamp, sizeof(stamp)) == 0)
         fprintf(stderr, "komutracker %s [%s] %s: %s\n", KOMUTRACKER_VERSION, stamp, event,
@@ -68,6 +70,7 @@ static void log_send(const char *event, int result) {
 }
 
 static void log_info(const char *message) {
+    if (!verbose_logging) return;
     char stamp[16];
     if (now_local(stamp, sizeof(stamp)) == 0)
         fprintf(stderr, "komutracker %s [%s] %s\n", KOMUTRACKER_VERSION, stamp, message);
@@ -107,6 +110,7 @@ int main(int argc, char **argv) {
     }
     if ((login ? 1 : 0) + (logout ? 1 : 0) + (status ? 1 : 0) > 1) { usage(argv[0]); return 2; }
     if (version) { printf("komutracker %s\n", KOMUTRACKER_VERSION); return 0; }
+    verbose_logging = verbose;
     if (testing) { timeout = 20.0; poll_time = 1.0; }
     if (!server) server = testing ? "http://127.0.0.1:5666" : "https://tracker-api.komu.vn";
     if (!auth_url) auth_url = "https://oauth2.mezon.ai";
@@ -183,15 +187,15 @@ int main(int argc, char **argv) {
     }
     if (idle_init()) { http_global_cleanup(); return 1; }
     bool window_available = window_init() == 0;
-    if (!window_available) fprintf(stderr, "Foreground process tracking is unavailable\n");
-    if (http_create_bucket(&client, afk_bucket, "aw-watcher-afk", "afkstatus", host))
+    if (!window_available && verbose_logging) fprintf(stderr, "Foreground process tracking is unavailable\n");
+    if (http_create_bucket(&client, afk_bucket, "aw-watcher-afk", "afkstatus", host) && verbose_logging)
         fprintf(stderr, "Unable to create AFK bucket\n");
-    if (window_available && http_create_bucket(&client, window_bucket, "aw-watcher-window", "currentwindow", host))
+    if (window_available && http_create_bucket(&client, window_bucket, "aw-watcher-window", "currentwindow", host) && verbose_logging)
         fprintf(stderr, "Unable to create foreground-process bucket\n");
 
     bool afk = false;
     double next_afk = now_seconds(), next_window = next_afk;
-    fprintf(stderr, "komutracker %s started for %s\n", KOMUTRACKER_VERSION, server);
+    if (verbose_logging) fprintf(stderr, "komutracker %s started for %s\n", KOMUTRACKER_VERSION, server);
     while (running) {
         double now = now_seconds();
         if (window_available && now >= next_window) {

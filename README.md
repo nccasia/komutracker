@@ -224,19 +224,17 @@ AW_AUTH_TIMEOUT
 
 ## Logs
 
-The CLI prints progress to the screen, prefixed with the version and a local `[HH:MM:SS]` timestamp, e.g. `komutracker 1.0.0 [14:05:23] afk heartbeat: OK`. It logs:
+All progress output is printed only with `-v`/`--verbose`; running without it is silent. Each line is prefixed with the version and a local `[HH:MM:SS]` timestamp, e.g. `komutracker 1.0.0 [14:05:23] afk heartbeat: OK`. It logs:
 
 - **startup** — `komutracker 1.0.0 started for <server>`.
 - **authentication polling** — each poll of the token endpoint logs `authentication poll attempt N pending`, `… succeeded`, or `… failed` while waiting for the browser login to finish.
 - **data sends** — each window heartbeat logs `foreground-process heartbeat: OK` (or `FAILED`) and each AFK heartbeat logs `afk heartbeat: OK` (or `FAILED`).
 
-The exact HTTP error reason for a failed request (timeout, bad status, etc.) is only printed with `-v`/`--verbose`:
+With `-v`/`--verbose`, the CLI additionally logs the authenticated user (`logged in as <name> <<email>>`) and the two bucket names (`afk bucket: …`, `foreground-process bucket: …`) at startup, and prints the exact HTTP error reason for a failed request (timeout, bad status, etc.):
 
 ```bash
 ./build/komutracker --verbose
 ```
-
-With `-v`/`--verbose`, the CLI additionally logs the authenticated user (`logged in as <name> <<email>>`) and the two bucket names (`afk bucket: …`, `foreground-process bucket: …`) at startup.
 
 Check the version:
 
