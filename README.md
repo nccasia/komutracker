@@ -1,215 +1,241 @@
-<img title="KomuTracker" src="https://komutracker.net/img/banner.png" align="center">
-
-<p align="center">
-  <b>Records what you do</b> so that you can <i>know how you've spent your time</i>.
-  <br>
-  All in a secure way where <i>you control the data</i>.
-</p>
-
-<p align="center">
-
-  <a href="https://twitter.com/ActivityWatchIt">
-    <img title="Twitter follow" src="https://img.shields.io/twitter/follow/ActivityWatchIt.svg?style=social&label=Follow"/>
-  </a>
-  <a href="https://github.com/nccasia/komutracker">
-    <img title="Star on GitHub" src="https://img.shields.io/github/stars/KomuTracker/komutracker.svg?style=social&label=Star">
-  </a>
+# tracker-afk
 
-  <br>
+Native command-line activity tracker written in C. One process detects AFK state and the process owning the currently focused window, then sends ActivityWatch-compatible heartbeats to separate server buckets. It does not enumerate all running processes and has no GUI.
 
-  <b>
-    <a href="https://komutracker.net/">Website</a>
-    — <a href="https://forum.komutracker.net/">Forum</a>
-    — <a href="https://docs.komutracker.net">Documentation</a>
-    — <a href="https://github.com/nccasia/komutracker/releases">Releases</a>
-  </b>
+## Install dependencies
 
-  <br>
+The build requires the libcurl development library, not only the `curl` command-line program.
 
-  <b>
-    <a href="https://komutracker.net/contributors/">Contributor stats</a>
-    — <a href="https://komutracker.net/ci/">CI overview</a>
-  </b>
-</p>
+### Ubuntu/Debian
 
-<p align="center">
-  <a href="https://komutracker.net/donate/">
-    <img title="Donated" src="https://img.shields.io/badge/budget-%2487%2Fmo%20from%2040%20supporters-orange.svg" />
-  </a>
+```bash
+sudo apt update
+sudo apt install build-essential cmake pkg-config libcurl4-openssl-dev libx11-dev libxss-dev
+```
 
-  <br>
+Verify libcurl installation:
 
-  <a href="https://github.com/nccasia/komutracker/actions?query=branch%3Amaster">
-    <img title="Build Status GitHub" src="https://github.com/nccasia/komutracker/workflows/Build/badge.svg?branch=master" />
-  </a>
-  <a href="https://ci.appveyor.com/project/ErikBjare/komutracker">
-    <img title="Build Status Appveyor" src="https://ci.appveyor.com/api/projects/status/vm7g9sdfi2vgix6n?svg=true" />
-  </a>
-  <a href="https://docs.komutracker.net">
-    <img title="Documentation" src="https://readthedocs.org/projects/komutracker/badge/?version=latest" />
-  </a>
+```bash
+pkg-config --modversion libcurl
+```
 
-  <br>
+If CMake still reports `Could NOT find CURL`, remove the old build directory and configure again:
 
-  <a href="https://github.com/nccasia/komutracker/releases">
-    <img title="Latest release" src="https://img.shields.io/github/release-pre/KomuTracker/komutracker.svg">
-  </a>
-  <a href="https://github.com/nccasia/komutracker/releases">
-    <img title="Total downloads (GitHub Releases)" src="https://img.shields.io/github/downloads/KomuTracker/komutracker/total.svg" />
-  </a>
-  <a href="https://discord.gg/vDskV9q">
-    <img title="Discord" src="https://img.shields.io/discord/755040852727955476" />
-  </a>
-</p>
+```bash
+rm -rf build
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+```
 
-<!--
-# TODO: Best practices badge that we should work towards, see issue #42.
-[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/873/badge)](https://bestpractices.coreinfrastructure.org/projects/873)
-[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2FActivityWatch%2Factivitywatch.svg?type=shield)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2FActivityWatch%2Factivitywatch?ref=badge_shield)
--->
+### Fedora/RHEL
 
+```bash
+sudo dnf install gcc make cmake pkgconf-pkg-config libcurl-devel libX11-devel libXScrnSaver-devel
+```
 
-*Do you want to receive email updates on major announcements?*<br>
-***[Signup for the newsletter](http://eepurl.com/cTU6QX)!***
+### Arch Linux
 
-<details>
- <summary>Table of Contents</summary>
+```bash
+sudo pacman -S --needed base-devel cmake pkgconf curl libx11 libxss
+```
 
- * [About](#about)
-    * [Screenshots](#screenshots)
-    * [Is this yet another time tracker?](#is-this-yet-another-time-tracker)
-       * [Feature comparison](#feature-comparison)
-    * [Installation &amp; Usage](#installation--usage)
- * [About this repository](#about-this-repository)
-    * [Server](#server)
-    * [Watchers](#watchers)
-    * [Libraries](#libraries)
- * [Contributing](#contributing)
-</details>
+### macOS
 
-## About
+Install the Xcode command-line tools, CMake, pkg-config, and libcurl with Homebrew:
 
-The goal of KomuTracker is simple: *Enable the collection of as much valuable lifedata as possible without compromising user privacy.*
+```bash
+xcode-select --install
+brew install cmake pkg-config curl
+```
 
-We've worked towards this goal by creating a application for safe storage of the data on the users local machine and as well as a set of watchers which record data such as:
+Homebrew installs curl as keg-only on many systems. If CMake cannot find it, configure with:
 
- - Currently active application and the title of its window
- - Currently active browser tab and its title and URL
- - Keyboard and mouse activity, to detect if you are AFK ("away from keyboard") or not
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+  -DCURL_ROOT="$(brew --prefix curl)"
+```
 
-It is up to you as user to collect as much as you want, or as little as you want (and we hope some of you will help write watchers so we can collect more).
+### Windows
 
-### Screenshots
+Install Visual Studio Build Tools with the **Desktop development with C++** workload, then install CMake and libcurl through vcpkg:
 
-<span><img src="https://komutracker.net/img/screenshot-v0.9.3-activity.png"   width="100%"></span>
-<span><img src="https://komutracker.net/img/screenshot-v0.8.0b9-timeline.png" width="100%"></span>
+```powershell
+git clone https://github.com/microsoft/vcpkg.git
+.\vcpkg\bootstrap-vcpkg.bat
+.\vcpkg\vcpkg.exe install curl:x64-windows
+```
 
+Configure using the vcpkg toolchain from a Developer PowerShell:
 
-## Installation & Usage
+```powershell
+cmake -S . -B build `
+  -DCMAKE_TOOLCHAIN_FILE="C:/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake" `
+  -DVCPKG_TARGET_TRIPLET=x64-windows
+cmake --build build --config Release
+```
 
-Downloads are available on our [releases page](https://github.com/nccasia/komutracker/releases).
+The Linux implementation currently requires an X11 display. A Wayland session without XWayland is not supported.
 
-For instructions on how to get started, please see [our guide in the documentation](https://docs.komutracker.net/en/latest/getting-started.html).
+## Build
 
-Interested in building from source? [There's a guide for that too](https://docs.komutracker.net/en/latest/installing-from-source.html).
+```bash
+cd /mnt/nccasia/tracker-afk
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+```
 
-## Is this yet another time tracker?
+CMake generates a Makefile in `build`, so after configuring you can also build with:
 
-Yes, but we found that most time trackers lack in one or more important features.
+```bash
+make -C build
+```
 
-**Common dealbreakers:**
+## Test
 
- - Not open source
- - The user does not own the data (common with non-open source options)
- - Lack of synchronization (and when available: it's centralized and the sync server knows everything)
- - Difficult to setup/use (most open source options tend to target programmers)
- - Low data resolution (low level of detail, does not store raw data, long intervals between entries)
- - Hard or impossible to extend (collecting more data is not as simple as it could be)
+```bash
+ctest --test-dir build --output-on-failure
+```
 
-**To sum it up:**
+Or:
 
- - Closed source solutions suffer from privacy issues and limited features.
- - Open source solutions aren't developed with end-users in mind and are usually not written to be easily extended (they lack a proper API). They also lack synchronization.
+```bash
+make -C build test
+```
 
-We have a plan to address all of these and we're well on our way. See the table below for our progress.
+## Login and run
 
+The API server defaults to `https://tracker-api.komu.vn`. The OAuth callback is `https://tracker-api.komu.vn/api/0/auth/callback`, matching the URL registered for the Mezon OAuth client.
 
-### Feature comparison
+On first run, the CLI creates a device ID, opens the Mezon login page in the default browser, and waits for authentication. After login completes in the browser, control returns to the CLI and the token is saved for future runs.
 
-##### Basics
+```bash
+./build/komutracker
+```
 
-|               | User owns data     | GUI                | Sync                       | Open Source        |
-| ------------- |:------------------:|:------------------:|:--------------------------:|:------------------:|
-| KomuTracker | :white_check_mark: | :white_check_mark: | [WIP][sync], decentralized | :white_check_mark: |
-| [Selfspy]       | :white_check_mark: | :x:                | :x:                        | :white_check_mark: |
-| [ulogme]        | :white_check_mark: | :white_check_mark: | :x:                        | :white_check_mark: |
-| [RescueTime]    | :x:                | :white_check_mark: | Centralized                | :x:                |
-| [WakaTime]      | :x:                | :white_check_mark: | Centralized                | Clients            |
+If the browser cannot open or the machine is headless, print the login URL without launching a browser:
 
-[sync]: https://github.com/nccasia/komutracker/issues/35
-[Selfspy]: https://github.com/selfspy/selfspy
-[ulogme]: https://github.com/karpathy/ulogme
-[RescueTime]: https://www.rescuetime.com/
-[WakaTime]: https://wakatime.com/
+```bash
+./build/komutracker --no-browser
+```
 
-##### Platforms
-<!-- TODO: Replace Platform names with icons  -->
+Force a new login and exit after showing the authenticated user:
 
-|               | Windows            | macOS              | Linux              | Android            | iOS                 |
-| ------------- |:------------------:|:------------------:|:------------------:|:------------------:|:-------------------:|
-| KomuTracker | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |:x:                  |
-| Selfspy       | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x:                |:x:                  |
-| ulogme        | :x:                | :white_check_mark: | :white_check_mark: | :x:                |:x:                  |
-| RescueTime    | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |Limited functionality|
+```bash
+./build/komutracker --login
+```
 
-##### Tracking
+Check the current login:
 
-|               | App & Window Title | AFK                | Browser Extensions | Editor Plugins     | Extensible            |
-| ------------- |:------------------:|:------------------:|:------------------:|:------------------:|:---------------------:|
-| KomuTracker | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark:    |
-| Selfspy       | :white_check_mark: | :white_check_mark: | :x:                | :x:                | :x:                   |
-| ulogme        | :white_check_mark: | :white_check_mark: | :x:                | :x:                | :x:                   |
-| RescueTime    | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x:                | :x:                   |
-| WakaTime      | :x:                | :white_check_mark: | :white_check_mark: | :white_check_mark: | Only for text editors |
+```bash
+./build/komutracker --status
+```
 
-For a complete list of the things KomuTracker can track, [see the page on *watchers* in the documentation](https://docs.komutracker.net/en/latest/watchers.html).
+Log out locally and from the server:
 
+```bash
+./build/komutracker --logout
+```
 
-## About this repository
+The login waits for up to five minutes by default. Change the timeout with `--auth-timeout`, or cancel with `Ctrl+C`:
 
-This repo is a bundle of the core components and official modules of KomuTracker (managed with `git submodule`). It's primary use is as a meta-package providing all the components in one repo; enabling easier packaging and installation. It is also where releases of the full suite are published (see [releases](https://github.com/nccasia/komutracker/releases)).
+```bash
+./build/komutracker --auth-timeout 600
+```
 
-### Server
+Manual credentials remain supported for automation:
 
-`aw-server` is the official implementation of the core service which the other KomuTracker services interact with. It provides a REST API to a datastore and query engine. It also serves the web interface developed in the `aw-webui` project (which provides the frontend part of the webapp).
+```bash
+./build/komutracker \
+  --server https://tracker-api.komu.vn \
+  --token "YOUR_TOKEN" \
+  --device-id "YOUR_DEVICE_ID"
+```
 
-The REST API includes:
+Or configure them through environment variables:
 
- - Access to a datastore suitable for timeseries/timeperiod-data
- - A query engine and language for such data
+```bash
+export AW_SERVER_URL="https://tracker-api.komu.vn"
+export AW_AUTH_TOKEN="YOUR_TOKEN"
+export AW_DEVICE_ID="YOUR_DEVICE_ID"
 
-The webapp includes:
+./build/komutracker
+```
 
- - Data visualization & browser
- - Query explorer
- - Export functionality 
+Configure AFK timeout and polling:
 
-### Watchers
+```bash
+./build/komutracker \
+  --timeout 180 \
+  --poll-time 5 \
+  --verbose
+```
 
-KomuTracker comes pre-installed with two watchers, `aw-watcher-afk` which logs the presence/absence of user activity from keyboard and mouse input and `aw-watcher-window` which logs the currently active application and it's window title.
+Testing mode uses a 20-second timeout, polls every second, and defaults to `http://localhost:5666`:
 
-There are lots of other watchers for KomuTracker which can track more types of activity such as `aw-watcher-web` which tracks time spent on websites, multiple editor watchers which tracks spent time coding and many more! [A full list of watchers can be found in our documentation here](https://docs.komutracker.net/en/latest/watchers.html).
+```bash
+./build/komutracker --testing --verbose
+```
 
-### Libraries
+Stop the tracker with `Ctrl+C`.
 
- - `aw-core` - core library, provides no runnable modules
- - `aw-client` - client library, useful when writing watchers
+## Options
 
-## Contributing
+```text
+--login               Force browser authentication and exit
+--logout              Revoke and remove saved credentials
+--status              Print the authenticated user and exit
+--no-browser          Print the login URL without opening it
+--auth-timeout SEC    Browser login timeout; default: 300
+--auth-url URL        OAuth provider base URL
+--client-id ID        OAuth client ID
+--redirect-uri URL    Remote OAuth callback URL
+--testing             Use testing defaults
+-v, --verbose         Print diagnostic HTTP errors
+--timeout SECONDS     Idle time before AFK status
+--poll-time SECONDS   AFK polling interval
+--window-poll-time SEC Foreground-process polling interval; default: 1
+--exclude-title        Send `excluded` instead of the focused window title
+--server URL          ActivityWatch-compatible server URL
+--token TOKEN         Bearer authentication token
+--device-id ID        Device-Id request header
+```
 
-Want to help? Great! Check out the [CONTRIBUTING.md file](./CONTRIBUTING.md)!
+Saved credentials:
 
-## Questions and support
+- Linux device ID: `~/.local/share/komutracker/.device_id`
+- Linux token: `~/.cache/komutracker/auth/auth.tracker`
+- macOS device ID: `~/Library/Application Support/komutracker/.device_id`
+- macOS token: `~/Library/Caches/komutracker/auth/auth.tracker`
+- Windows: under `%LOCALAPPDATA%\komutracker`
 
-Have a question, suggestion, problem, or just want to say hi? Post on [the forum](https://forum.komutracker.net/)!
+Token and device files use owner-only permissions on POSIX systems. Tokens are never printed by the CLI.
 
+Environment variables:
+
+```text
+AW_SERVER_URL
+AW_AUTH_TOKEN
+AW_DEVICE_ID
+AW_AUTH_URL
+AW_CLIENT_ID
+AW_REDIRECT_URI
+AW_AUTH_TIMEOUT
+```
+
+## Data sent
+
+The combined process publishes two buckets:
+
+- `aw-watcher-afk_<hostname>` / `afkstatus`: `afk` or `not-afk`.
+- `aw-watcher-window_<hostname>` / `currentwindow`: the focused process in `app` and its window title in `title`.
+
+Only the foreground process is sent. Background process lists are never collected. Use `--exclude-title` to avoid sending window titles:
+
+```bash
+./build/komutracker --exclude-title --window-poll-time 1
+```
+
+## Platform backends
+
+- Windows: `GetForegroundWindow`, `QueryFullProcessImageName`, and `GetLastInputInfo`.
+- macOS: CoreGraphics window list and idle event APIs. Window titles may require Screen Recording permission.
+- Linux: X11 `_NET_ACTIVE_WINDOW`, process metadata, and XScreenSaver. A Wayland session without XWayland is not supported.
