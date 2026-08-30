@@ -52,7 +52,7 @@ static int request(const http_client *client, const char *url, const char *metho
     curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
     curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
     curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, transfer_progress);
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, "tracker-afk/1.0");
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "komutracker/1.0");
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, capture);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
     CURLcode result = curl_easy_perform(curl);

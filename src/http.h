@@ -5,6 +5,10 @@
 #include <signal.h>
 #include <stddef.h>
 
+#ifndef KOMUTRACKER_VERSION
+#define KOMUTRACKER_VERSION "1.0.0"
+#endif
+
 typedef struct {
     const char *base_url;
     const char *token;

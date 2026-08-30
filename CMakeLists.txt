@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(aw-watcher-afk VERSION 1.0.0 LANGUAGES C)
+project(komutracker VERSION 1.0.0 LANGUAGES C)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -28,6 +28,7 @@ endif()
 
 add_executable(komutracker ${AFK_SOURCES})
 target_include_directories(komutracker PRIVATE src)
+target_compile_definitions(komutracker PRIVATE KOMUTRACKER_VERSION="${PROJECT_VERSION}")
 target_link_libraries(komutracker PRIVATE CURL::libcurl)
 
 if(WIN32)
