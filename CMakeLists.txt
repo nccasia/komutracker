@@ -12,6 +12,7 @@ set(AFK_SOURCES
     src/http.c
     src/auth.c
     src/dirs.c
+    src/instance.c
 )
 
 if(WIN32)
