@@ -41,6 +41,17 @@ static double now_seconds(void) {
 #endif
 }
 
+static int now_local(char *buffer, size_t size) {
+    time_t whole = time(NULL);
+    struct tm local;
+#ifdef _WIN32
+    if (localtime_s(&local, &whole) != 0) return -1;
+#else
+    if (localtime_r(&whole, &local) == NULL) return -1;
+#endif
+    return snprintf(buffer, size, "%02d:%02d:%02d", local.tm_hour, local.tm_min, local.tm_sec) >= (int)size ? -1 : 0;
+}
+
 static int get_hostname(char *buffer, size_t size) {
 #ifdef _WIN32
     DWORD length = (DWORD)size; return GetComputerNameA(buffer, &length) ? 0 : -1;
@@ -50,14 +61,16 @@ static int get_hostname(char *buffer, size_t size) {
 }
 
 static void log_send(const char *event, int result) {
-    fprintf(stderr, "komutracker %s: %s %s\n", KOMUTRACKER_VERSION, event,
-            result == 0 ? "sent" : "send failed");
+    char stamp[16];
+    if (now_local(stamp, sizeof(stamp)) == 0)
+        fprintf(stderr, "komutracker %s [%s] %s: %s\n", KOMUTRACKER_VERSION, stamp, event,
+                result == 0 ? "OK" : "FAILED");
 }
 
 int main(int argc, char **argv) {
     bool testing = false, verbose = false, login = false, logout = false, status = false, no_browser = false;
     bool exclude_title = false, version = false;
-    double timeout = 180.0, poll_time = 5.0, window_poll_time = 1.0;
+    double timeout = 180.0, poll_time = 5.0, window_poll_time = 10.0;
     int auth_timeout = getenv("AW_AUTH_TIMEOUT") ? atoi(getenv("AW_AUTH_TIMEOUT")) : 300;
     const char *server = getenv("AW_SERVER_URL"), *token_arg = getenv("AW_AUTH_TOKEN");
     const char *device_arg = getenv("AW_DEVICE_ID");

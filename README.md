@@ -193,7 +193,7 @@ Stop the tracker with `Ctrl+C`.
 --version, -V         Print the komutracker version and exit
 --timeout SECONDS     Idle time before AFK status
 --poll-time SECONDS   AFK polling interval
---window-poll-time SEC Foreground-process polling interval; default: 1
+--window-poll-time SEC Foreground-process polling interval; default: 10
 --exclude-title        Send `excluded` instead of the focused window title
 --server URL          ActivityWatch-compatible server URL
 --token TOKEN         Bearer authentication token
@@ -224,11 +224,11 @@ AW_AUTH_TIMEOUT
 
 ## Logs
 
-The CLI prints progress to the screen, prefixed with the version, e.g. `komutracker 1.0.0:`. It logs:
+The CLI prints progress to the screen, prefixed with the version and a local `[HH:MM:SS]` timestamp, e.g. `komutracker 1.0.0 [14:05:23] afk heartbeat: OK`. It logs:
 
 - **startup** — `komutracker 1.0.0 started for <server>`.
 - **authentication polling** — each poll of the token endpoint logs `authentication poll attempt N pending`, `… succeeded`, or `… failed` while waiting for the browser login to finish.
-- **data sends** — each window heartbeat logs `foreground-process heartbeat sent` (or `send failed`) and each AFK heartbeat logs `afk heartbeat sent` (or `send failed`).
+- **data sends** — each window heartbeat logs `foreground-process heartbeat: OK` (or `FAILED`) and each AFK heartbeat logs `afk heartbeat: OK` (or `FAILED`).
 
 The exact HTTP error reason for a failed request (timeout, bad status, etc.) is only printed with `-v`/`--verbose`:
 
@@ -253,7 +253,7 @@ The combined process publishes two buckets:
 Only the foreground process is sent. Background process lists are never collected. Use `--exclude-title` to avoid sending window titles:
 
 ```bash
-./build/komutracker --exclude-title --window-poll-time 1
+./build/komutracker --exclude-title --window-poll-time 10
 ```
 
 ## Platform backends
