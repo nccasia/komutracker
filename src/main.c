@@ -2,6 +2,7 @@
 #include "auth.h"
 #include "http.h"
 #include "idle.h"
+#include "instance.h"
 #include "window.h"
 
 #include <signal.h>
@@ -28,7 +29,7 @@ static void usage(const char *program) {
         "  [--server URL] [--token TOKEN] [--device-id ID] [--timeout SEC]\n"
         "  [--poll-time SEC] [--window-poll-time SEC] [--exclude-title]\n"
         "  [--auth-url URL] [--client-id ID]\n"
-        "  [--redirect-uri URL] [--auth-timeout SEC] [--version]\n", program);
+        "  [--redirect-uri URL] [--auth-timeout SEC] [--daemon] [--version]\n", program);
 }
 
 static double now_seconds(void) {
@@ -78,7 +79,7 @@ static void log_info(const char *message) {
 
 int main(int argc, char **argv) {
     bool testing = false, verbose = false, login = false, logout = false, status = false, no_browser = false;
-    bool exclude_title = false, version = false;
+    bool exclude_title = false, version = false, daemon = false;
     double timeout = 180.0, poll_time = 5.0, window_poll_time = 10.0;
     int auth_timeout = getenv("AW_AUTH_TIMEOUT") ? atoi(getenv("AW_AUTH_TIMEOUT")) : 300;
     const char *server = getenv("AW_SERVER_URL"), *token_arg = getenv("AW_AUTH_TOKEN");
@@ -95,6 +96,7 @@ int main(int argc, char **argv) {
         else if (!strcmp(argv[i], "--status")) status = true;
         else if (!strcmp(argv[i], "--no-browser")) no_browser = true;
         else if (!strcmp(argv[i], "--exclude-title")) exclude_title = true;
+        else if (!strcmp(argv[i], "--daemon") || !strcmp(argv[i], "-d")) daemon = true;
         else if (!strcmp(argv[i], "--version") || !strcmp(argv[i], "-V")) version = true;
         else if (!strcmp(argv[i], "--timeout") && i + 1 < argc) timeout = strtod(argv[++i], NULL);
         else if (!strcmp(argv[i], "--poll-time") && i + 1 < argc) poll_time = strtod(argv[++i], NULL);
@@ -157,6 +159,25 @@ int main(int argc, char **argv) {
         if (result != HTTP_AUTH_OK) return 1;
         printf("Authenticated as %s <%s>\n", name, email);
         if (status || login) return 0;
+    }
+
+    /* Once committed to tracking, ensure only one instance runs. Acquire the
+       lock before detaching so a duplicate launch is reported to the terminal. */
+    int lock_status = instance_lock();
+    if (lock_status != 0) {
+        fprintf(stderr, lock_status > 0
+                            ? "Another komutracker instance is already running\n"
+                            : "Failed to acquire instance lock\n");
+        http_global_cleanup();
+        return 1;
+    }
+
+    if (daemon) {
+        if (instance_daemonize() != 0) {
+            fprintf(stderr, "Failed to run as daemon\n");
+            http_global_cleanup();
+            return 1;
+        }
     }
 
     char host[256] = {0}; if (get_hostname(host, sizeof(host) - 1)) strcpy(host, "unknown");

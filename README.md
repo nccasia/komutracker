@@ -177,6 +177,22 @@ Testing mode uses a 20-second timeout, polls every second, and defaults to `http
 
 Stop the tracker with `Ctrl+C`.
 
+### Run as a daemon
+
+Pass `-d` or `--daemon` to detach the process and keep tracking in the background:
+
+```bash
+./build/komutracker --daemon
+```
+
+The process double-forks, reparents to init, redirects its standard streams, and writes its PID to `~/.cache/komutracker/tracker.pid`. To stop it, send it a signal (or use `systemd`/your service manager):
+
+```bash
+kill "$(cat ~/.cache/komutracker/tracker.pid)"
+```
+
+Only one instance runs at a time. Launching the command again while another instance is already tracking exits immediately with `Another komutracker instance is already running`. The lock is released automatically if the process crashes.
+
 ## Options
 
 ```text
@@ -195,6 +211,7 @@ Stop the tracker with `Ctrl+C`.
 --poll-time SECONDS   AFK polling interval
 --window-poll-time SEC Foreground-process polling interval; default: 10
 --exclude-title        Send `excluded` instead of the focused window title
+-d, --daemon           Detach and run in the background (single instance)
 --server URL          ActivityWatch-compatible server URL
 --token TOKEN         Bearer authentication token
 --device-id ID        Device-Id request header
