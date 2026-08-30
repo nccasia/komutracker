@@ -92,8 +92,9 @@ int http_create_bucket(const http_client *client, const char *bucket, const char
     char response[1024];
     int result = request(client, url, "POST", body, response, sizeof(response), &status);
     if (result || ((status < 200 || status >= 300) && status != 409)) {
-        fprintf(stderr, "Bucket creation failed: HTTP %ld%s%s\n", status,
-                response[0] ? ": " : "", response);
+        if (client->verbose)
+            fprintf(stderr, "Bucket creation failed: HTTP %ld%s%s\n", status,
+                    response[0] ? ": " : "", response);
         return -1;
     }
     return 0;
