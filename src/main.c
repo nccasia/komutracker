@@ -67,6 +67,12 @@ static void log_send(const char *event, int result) {
                 result == 0 ? "OK" : "FAILED");
 }
 
+static void log_info(const char *message) {
+    char stamp[16];
+    if (now_local(stamp, sizeof(stamp)) == 0)
+        fprintf(stderr, "komutracker %s [%s] %s\n", KOMUTRACKER_VERSION, stamp, message);
+}
+
 int main(int argc, char **argv) {
     bool testing = false, verbose = false, login = false, logout = false, status = false, no_browser = false;
     bool exclude_title = false, version = false;
@@ -150,9 +156,31 @@ int main(int argc, char **argv) {
     }
 
     char host[256] = {0}; if (get_hostname(host, sizeof(host) - 1)) strcpy(host, "unknown");
+    char name[512] = {0}, email[512] = {0};
+    int profile = http_auth_me(&client, name, sizeof(name), email, sizeof(email));
+    char username[512] = {0};
+    if (profile == HTTP_AUTH_OK) {
+        size_t at = strcspn(email, "@");
+        snprintf(username, sizeof(username), "%.*s", (int)at, email);
+        if (verbose) {
+            char message[1080];
+            snprintf(message, sizeof(message), "logged in as %s <%s>", name, email);
+            log_info(message);
+        }
+    } else {
+        strcpy(username, host);
+        if (verbose) log_info("logged-in user unavailable; using hostname for bucket name");
+    }
     char afk_bucket[512], window_bucket[512];
-    snprintf(afk_bucket, sizeof(afk_bucket), "aw-watcher-afk_%s", host);
-    snprintf(window_bucket, sizeof(window_bucket), "aw-watcher-window_%s", host);
+    snprintf(afk_bucket, sizeof(afk_bucket), "aw-watcher-afk_%s", username);
+    snprintf(window_bucket, sizeof(window_bucket), "aw-watcher-window_%s", username);
+    if (verbose) {
+        char message[1080];
+        snprintf(message, sizeof(message), "afk bucket: %s", afk_bucket);
+        log_info(message);
+        snprintf(message, sizeof(message), "foreground-process bucket: %s", window_bucket);
+        log_info(message);
+    }
     if (idle_init()) { http_global_cleanup(); return 1; }
     bool window_available = window_init() == 0;
     if (!window_available) fprintf(stderr, "Foreground process tracking is unavailable\n");
