@@ -30,9 +30,18 @@ static int pid_path(char *out, size_t size) {
     if (!value) return -1;
     return snprintf(out, size, "%s/Library/Caches/komutracker/tracker.pid", value) >= (int)size ? -1 : 0;
 #else
-    const char *value = getenv("HOME");
+    const char *xdg = getenv("XDG_CACHE_HOME");
+    const char *value = xdg && *xdg ? xdg : getenv("HOME");
     if (!value) return -1;
-    return snprintf(out, size, "%s%c.komutracker%ctracker.pid", value, PATH_SEP, PATH_SEP) >= (int)size ? -1 : 0;
+    int n = snprintf(out, size, "%s%ckomutracker%ctracker.pid", value, PATH_SEP, PATH_SEP);
+    if (n < 0 || n >= (int)size) return -1;
+    if (!xdg || !*xdg) {
+        char alt[2048];
+        n = snprintf(alt, sizeof(alt), "%s%c.cache%ckomutracker%ctracker.pid", value, PATH_SEP, PATH_SEP, PATH_SEP);
+        if (n < 0 || n >= (int)sizeof(alt)) return -1;
+        memcpy(out, alt, (size_t)n + 1);
+    }
+    return 0;
 #endif
 }
 
@@ -75,7 +84,7 @@ static int lock_fd = -1;
 int instance_lock(void) {
     char path[2048];
     if (pid_path(path, sizeof(path))) {
-        fprintf(stderr, "Cannot acquire instance lock: cache directory is not set ($HOME)\n");
+        fprintf(stderr, "Cannot acquire instance lock: cache directory is not set ($XDG_CACHE_HOME or $HOME)\n");
         return -1;
     }
     if (dirs_create_parent(path)) {
