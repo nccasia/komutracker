@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#111827">
+    <title>Komutracker</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+
+<body>
+    <main class="shell">
+        <header class="topbar">
+            <a class="brand" href="/" aria-label="Komutracker home">
+                <span class="brand-mark"><i></i><i></i><i></i></span>
+                <span>Komutracker</span>
+            </a>
+        </header>
+
+        <section class="hero">
+            <div class="eyebrow">Personal pulse</div>
+            <h1>Komutracker</h1>
+            <p>Look up a username to review active and AFK stretches across the day.</p>
+            <form id="lookup-form" class="lookup" autocomplete="off">
+                <label class="field">
+                    <span>Username</span>
+                    <input id="hostname" name="hostname" placeholder="e.g. ngocanh" maxlength="128" required>
+                </label>
+                <div class="field field-span">
+                    <span>Timespan</span>
+                    <div class="range-options" role="group" aria-label="Select timespan">
+                        <button type="button" class="range-option active" data-range="today">Today</button>
+                        <button type="button" class="range-option" data-range="yesterday">Yesterday</button>
+                        <button type="button" class="range-option" data-range="7days">7 days</button>
+                        <button type="button" class="range-option" data-range="custom">Custom</button>
+                    </div>
+                </div>
+                <div id="custom-range" class="custom-range" hidden>
+                    <label class="field"><span>Start</span><input id="custom-start" type="date"></label>
+                    <label class="field"><span>End</span><input id="custom-end" type="date"></label>
+                </div>
+                <button type="submit"><span>Search report</span><b aria-hidden="true">↗</b></button>
+            </form>
+            <div id="message" class="message" role="status" aria-live="polite"></div>
+        </section>
+
+        <section id="report" class="report" hidden>
+            <div class="report-heading">
+                <div>
+                    <div class="eyebrow">Daily snapshot</div>
+                    <h2 id="report-title">—</h2>
+                </div>
+                <div id="report-email" class="email">—</div>
+            </div>
+
+            <div class="metrics">
+                <article class="metric metric-active"><span>Active time</span><strong
+                        id="active-time">00:00:00</strong><small>keyboard and presence</small></article>
+                <article class="metric metric-afk"><span>AFK time</span><strong
+                        id="afk-time">00:00:00</strong><small>away from input</small></article>
+                <article class="metric metric-coverage"><span>Tracked</span><strong id="coverage">00%</strong><small>of
+                        the selected day</small></article>
+            </div>
+
+            <article class="panel timeline-panel">
+                <div class="panel-heading">
+                    <div><span class="eyebrow">Day arc</span>
+                        <h3>Activity timeline</h3>
+                    </div>
+                    <div class="timeline-tools">
+                        <div class="legend"><span><i class="dot dot-active"></i>Active</span><span><i
+                                    class="dot dot-afk"></i>AFK</span></div>
+                        <div class="zoom-tools" aria-label="Timeline zoom controls">
+                            <button type="button" id="zoom-out" title="Zoom out">−</button>
+                            <button type="button" id="zoom-reset" title="Reset zoom">100%</button>
+                            <button type="button" id="zoom-in" title="Zoom in">+</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="timeline-viewport" class="timeline-viewport">
+                    <div id="timeline" class="timeline" aria-label="Activity timeline"></div>
+                </div>
+                <div id="timeline-axis" class="axis"></div>
+            </article>
+
+            <article class="panel events-panel">
+                <div class="panel-heading">
+                    <div><span class="eyebrow">Raw intervals</span>
+                        <h3>Event detail</h3>
+                    </div><span id="event-count" class="count">0 events</span>
+                </div>
+                <div id="events" class="events"></div>
+            </article>
+        </section>
+        <footer>Built for a quieter view of work rhythm. No window titles are collected.</footer>
+    </main>
+    <script src="/app.js"></script>
+</body>
+
+</html>

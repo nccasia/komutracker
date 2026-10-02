@@ -1,0 +1,32 @@
+{
+  "name": "komutracker-server",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Small ActivityWatch-compatible API for komutracker",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "npm run build && node dist/index.js",
+    "migration:generate": "typeorm-ts-node-commonjs migration:generate ./migrations/${npm_config_name:-migration} -d ./typeorm-datasource.ts",
+    "migration:create": "typeorm-ts-node-commonjs migration:create ./migrations/${npm_config_name:-migration}",
+    "migration:run": "typeorm-ts-node-commonjs migration:run -d ./typeorm-datasource.ts",
+    "migration:revert": "typeorm-ts-node-commonjs migration:revert -d ./typeorm-datasource.ts",
+    "migration:show": "typeorm-ts-node-commonjs migration:show -d ./typeorm-datasource.ts"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.5",
+    "express": "^5.1.0",
+    "pg": "^8.16.3",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^0.3.27"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.7.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

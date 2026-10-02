@@ -80,7 +80,7 @@ static void log_info(const char *message) {
 int main(int argc, char **argv) {
     bool testing = false, verbose = false, login = false, logout = false, status = false, no_browser = false;
     bool exclude_title = false, version = false, daemon = false;
-    double timeout = 180.0, poll_time = 5.0, window_poll_time = 10.0;
+    double timeout = 180.0, poll_time = 10.0, window_poll_time = 10.0;
     int auth_timeout = getenv("AW_AUTH_TIMEOUT") ? atoi(getenv("AW_AUTH_TIMEOUT")) : 300;
     const char *server = getenv("AW_SERVER_URL"), *token_arg = getenv("AW_AUTH_TOKEN");
     const char *device_arg = getenv("AW_DEVICE_ID");
@@ -209,7 +209,9 @@ int main(int argc, char **argv) {
         log_info(message);
     }
     if (idle_init()) { http_global_cleanup(); return 1; }
-    bool window_available = window_init() == 0;
+    /* Window tracking is intentionally disabled until its API is implemented. */
+    bool window_available = false;
+    /* bool window_available = window_init() == 0; */
     if (!window_available && verbose_logging) fprintf(stderr, "Foreground process tracking is unavailable\n");
     if (http_create_bucket(&client, afk_bucket, "aw-watcher-afk", "afkstatus", host) && verbose_logging)
         fprintf(stderr, "Unable to create AFK bucket\n");

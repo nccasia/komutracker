@@ -165,7 +165,7 @@ Configure AFK timeout and polling:
 ```bash
 ./build/komutracker \
   --timeout 180 \
-  --poll-time 5 \
+  --poll-time 10 \
   --verbose
 ```
 
@@ -208,7 +208,7 @@ Only one instance runs at a time. Launching the command again while another inst
 -v, --verbose         Additionally print transport errors, the logged-in user, and bucket names
 --version, -V         Print the komutracker version and exit
 --timeout SECONDS     Idle time before AFK status
---poll-time SECONDS   AFK polling interval
+--poll-time SECONDS   AFK polling interval; default: 10
 --window-poll-time SEC Foreground-process polling interval; default: 10
 --exclude-title        Send `excluded` instead of the focused window title
 -d, --daemon           Detach and run in the background (single instance)
