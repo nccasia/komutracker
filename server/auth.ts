@@ -62,7 +62,9 @@ async function exchangeCode(config: AppConfig, code: string, state: string): Pro
         headers: { 'content-type': 'application/x-www-form-urlencoded' },
         body: form,
     });
-    if (!response.ok) throw new Error(`Mezon token request failed with HTTP ${response.status}`);
+    if (!response.ok) {
+        throw new Error(`Mezon token request failed with HTTP ${response.status}. Details: ${await response.text()}`);
+    }
     return response.json() as Promise<OAuthTokens>;
 }
 
