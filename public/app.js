@@ -1,9 +1,12 @@
 import { fetchActivityEvents } from './js/activity-api.js';
 import { createDateRangeController } from './js/date-range.js';
 import { getRequiredElement } from './js/dom.js';
+import { initializeI18n, t } from './js/i18n.js';
 import { readLookupParams, persistLookupParams } from './js/lookup-params.js';
 import { createReportView } from './js/report-view.js';
 import { createTimelineView } from './js/timeline-view.js';
+
+initializeI18n();
 
 const ui = {
     form: getRequiredElement('lookup-form'),
@@ -12,6 +15,7 @@ const ui = {
     customRange: getRequiredElement('custom-range'),
     customStart: getRequiredElement('custom-start'),
     customEnd: getRequiredElement('custom-end'),
+    customWarning: getRequiredElement('custom-range-warning'),
     message: getRequiredElement('message'),
     report: getRequiredElement('report'),
 };
@@ -21,6 +25,7 @@ const rangeController = createDateRangeController({
     customContainer: ui.customRange,
     customStart: ui.customStart,
     customEnd: ui.customEnd,
+    customWarning: ui.customWarning,
 });
 
 const timelineView = createTimelineView({
@@ -45,16 +50,29 @@ const reportView = createReportView({
     timelineView,
 });
 
-function setMessage(text, type = '') {
+let messageTranslation = null;
+
+function setMessage(text, type = '', translation = null) {
     ui.message.textContent = text;
     ui.message.className = ['message', type].filter(Boolean).join(' ');
+    messageTranslation = translation;
 }
 
 function getErrorMessage(error) {
-    if (error instanceof Error && error.message === 'User not found') {
-        return 'User not found. Check the hostname and try again.';
+    if (error instanceof Error && error.translationKey) {
+        return {
+            text: t(error.translationKey, error.translationValues),
+            translation: { key: error.translationKey, values: error.translationValues },
+        };
     }
-    return error instanceof Error ? error.message : 'Unable to load this report';
+    if (error instanceof Error && error.message === 'User not found') {
+        return { text: t('error.userNotFound'), translation: { key: 'error.userNotFound' } };
+    }
+    if (error instanceof Error && error.message === 'Unable to load this report') {
+        return { text: t('error.unableToLoad'), translation: { key: 'error.unableToLoad' } };
+    }
+    if (error instanceof Error && error.message) return { text: error.message };
+    return { text: t('error.unableToLoad'), translation: { key: 'error.unableToLoad' } };
 }
 
 async function lookup(event) {
@@ -67,14 +85,15 @@ async function lookup(event) {
         const range = rangeController.getSelectedRange();
         persistLookupParams({ username, ...rangeController.getQueryState() });
 
-        setMessage('Reading activity…', 'loading');
+        setMessage(t('message.loading'), 'loading', { key: 'message.loading' });
         reportView.hide();
 
         const events = await fetchActivityEvents(username, range);
         reportView.render({ username, range, events });
         setMessage('');
     } catch (error) {
-        setMessage(getErrorMessage(error), 'error');
+        const message = getErrorMessage(error);
+        setMessage(message.text, 'error', message.translation);
     }
 }
 
@@ -89,4 +108,15 @@ function initialize() {
 }
 
 ui.form.addEventListener('submit', lookup);
+document.addEventListener('languagechange', () => {
+    rangeController.refreshLanguage();
+    reportView.refreshLanguage();
+    if (messageTranslation) {
+        setMessage(
+            t(messageTranslation.key, messageTranslation.values),
+            ui.message.classList.contains('error') ? 'error' : 'loading',
+            messageTranslation,
+        );
+    }
+});
 initialize();

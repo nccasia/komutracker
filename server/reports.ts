@@ -1,4 +1,5 @@
 import { DataSource } from 'typeorm';
+import { assertRangeWithinRetention } from './retention';
 
 export interface UserDayReport {
     userId: string;
@@ -29,7 +30,7 @@ export class UserNotFoundError extends Error {
 
 function dayRange(day: string): [Date, Date] {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new Error('day must use YYYY-MM-DD');
-    const start = new Date(`${day}T07:00:00.000Z`); // UTC+7 timezone
+    const start = new Date(`${day}T00:00:00+07:00`);
     if (Number.isNaN(start.getTime())) throw new Error('Invalid day');
     return [start, new Date(start.getTime() + 24 * 60 * 60 * 1000)];
 }
@@ -51,10 +52,11 @@ function formatDuration(seconds: number | string): string {
     return [hours, minutes, remainingSeconds].map((value) => String(value).padStart(2, '0')).join(':');
 }
 
-export function createReports(dataSource: DataSource) {
+export function createReports(dataSource: DataSource, now: () => Date = () => new Date()) {
     return {
         async usersForDay(day: string): Promise<UserDayReport[]> {
             const [start, end] = dayRange(day);
+            assertRangeWithinRetention(start, end, now());
             const rows = await dataSource.query<UserDayReportRow[]>(`
                 SELECT
                     u.id AS "userId",
@@ -87,6 +89,8 @@ export function createReports(dataSource: DataSource) {
         async eventsForHostname(hostname: string, startValue: string, endValue: string): Promise<EventDetail[]> {
             const normalizedHostname = hostname.trim().toLowerCase();
             if (!/^[a-z0-9][a-z0-9._-]{0,127}$/.test(normalizedHostname)) throw new Error('Invalid hostname');
+            const [start, end] = timeRange(startValue, endValue);
+            assertRangeWithinRetention(start, end, now());
             const users = await dataSource.query<{ id: string }[]>(`
                 SELECT id
                 FROM users
@@ -95,7 +99,6 @@ export function createReports(dataSource: DataSource) {
             `, [normalizedHostname]);
             if (!users[0]) throw new UserNotFoundError();
 
-            const [start, end] = timeRange(startValue, endValue);
             return dataSource.query<EventDetail[]>(`
                 SELECT
                     id::text AS id,

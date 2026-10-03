@@ -1,6 +1,7 @@
 import { clipEventToRange, isActiveEvent } from './activity-event.js';
 import { createElement } from './dom.js';
 import { formatDuration, formatEventDateTime } from './format.js';
+import { getLocale, t } from './i18n.js';
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 4;
@@ -35,8 +36,8 @@ export function createTimelineView({ viewport, track, timeline, axis, zoomOut, z
             const offset = Math.min(index * interval, span);
             const point = new Date(range.start.getTime() + offset);
             const text = longRange
-                ? point.toLocaleDateString([], { month: 'short', day: 'numeric' })
-                : point.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                ? point.toLocaleDateString(getLocale(), { month: 'short', day: 'numeric' })
+                : point.toLocaleTimeString(getLocale(), { hour: '2-digit', minute: '2-digit' });
             const label = createElement('span', { text });
             label.style.left = `${(offset / span) * 100}%`;
             labels.append(label);
@@ -53,18 +54,22 @@ export function createTimelineView({ viewport, track, timeline, axis, zoomOut, z
         if (to <= from) return null;
 
         const isActive = isActiveEvent(event);
-        const status = isActive ? 'Active' : 'AFK';
+        const status = t(isActive ? 'timeline.active' : 'timeline.afk');
         const segment = createElement('div', {
             className: `segment ${isActive ? 'active' : 'afk'}`,
         });
         const span = rangeEnd - rangeStart;
-        const eventStart = formatEventDateTime(new Date(event.startAt));
-        const eventEnd = formatEventDateTime(new Date(event.endAt));
+        const eventStart = formatEventDateTime(new Date(event.startAt), getLocale());
+        const eventEnd = formatEventDateTime(new Date(event.endAt), getLocale());
 
         segment.style.left = `${((from - rangeStart) / span) * 100}%`;
         segment.style.width = `${((to - from) / span) * 100}%`;
         segment.title = `${status} · ${formatDuration((to - from) / 1000)}\n${eventStart} – ${eventEnd}`;
-        segment.setAttribute('aria-label', `${status} from ${eventStart} to ${eventEnd}`);
+        segment.setAttribute('aria-label', t('timeline.segmentLabel', {
+            status,
+            start: eventStart,
+            end: eventEnd,
+        }));
         return segment;
     }
 

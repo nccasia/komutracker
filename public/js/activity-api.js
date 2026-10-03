@@ -10,7 +10,8 @@ export async function fetchActivityEvents(username, { start, end }) {
         throw new Error('User not found');
     }
     if (!response.ok) {
-        throw new Error('Unable to load this report');
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error || 'Unable to load this report');
     }
 
     return response.json();

@@ -7,6 +7,7 @@ import { AppConfig } from './config';
 import { createActivity } from './activity';
 import { createDataSource } from './database';
 import { createReports, UserNotFoundError } from './reports';
+import { startActivityCleanupJob } from './cleanup';
 
 interface AuthService {
     poll(deviceId: string): Promise<string | null>;
@@ -136,7 +137,10 @@ export async function start(config: AppConfig): Promise<ReturnType<Express['list
     const dataSource = createDataSource(config);
     await dataSource.initialize();
     const app = createApp({ dataSource, config });
-    return app.listen(config.port, config.host, () => {
+    const stopCleanup = startActivityCleanupJob(dataSource);
+    const server = app.listen(config.port, config.host, () => {
         console.log(`komutracker API listening on http://${config.host}:${config.port}`);
     });
+    server.on('close', stopCleanup);
+    return server;
 }

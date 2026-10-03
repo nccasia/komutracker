@@ -24,8 +24,8 @@ If `AUTH_TOKEN` is set, the server uses fixed internal auth and skips OAuth. Oth
 - `POST /api/0/auth` with `{ "device_id": "..." }`: ensure the user exists and return a token as a JSON string, or `null` while OAuth is pending.
 - `GET /api/0/auth/me`: return the user associated with `Device-Id` and its bearer token.
 - `GET /api/0/auth/callback?code=...&state=...`: complete the Mezon authorization code flow.
-- `GET /api/0/reports/users?day=YYYY-MM-DD`: return every user with `email`, `mezonId`, `name`, and `active_time` seconds for that UTC+7 day. Requires `X-API-Key: <REPORT_API_KEY>`.
-- `GET /api/0/users/:hostname/events?start=ISO&end=ISO`: public event detail for a hostname and ISO timespan. Hostname is the part before `@` in the user's email.
+- `GET /api/0/reports/users?day=YYYY-MM-DD`: return every user with `email`, `mezonId`, `name`, and `active_time` seconds for that UTC+7 day. Requires `X-API-Key: <REPORT_API_KEY>`. The day must be inside the retained 90-calendar-day window.
+- `GET /api/0/users/:hostname/events?start=ISO&end=ISO`: public event detail for a hostname and ISO timespan. Hostname is the part before `@` in the user's email. The whole range must be inside the retained 90-calendar-day window in GMT+7.
 - `DELETE /api/0/auth`: compatibility no-op returning success.
 - `POST /api/0/buckets/:id`: compatibility no-op returning success.
 - `POST /api/0/buckets/:id/heartbeat`: persist AFK events; legacy window payloads return 200 and are ignored.
@@ -42,6 +42,8 @@ The server uses a fixed `mergeWindowSeconds` of 370 seconds by default. Overlapp
 AFK events are stored with `status`, `start_at`, and `end_at`. Consecutive heartbeats with the same status update the latest row inside a PostgreSQL transaction; a new row is created when the status changes or a non-overlapping gap exceeds the merge window. TypeORM synchronizes the schema outside production; with `NODE_ENV=production`, migrations run before the server listens.
 
 The all-users report requires `X-API-Key`; the per-user event query is public and returns 404 when the hostname is not found. The event query uses the `(user_id, start_at, end_at)` composite index and the daily report filters event overlap before aggregating, so unrelated users and periods are not scanned into the result.
+
+The server keeps the current GMT+7 calendar day plus the preceding 89 days. An in-process cron job (`0 1 * * *`, `Asia/Ho_Chi_Minh`) runs daily at 01:00 GMT+7 and removes activity events that ended before that retention window. Overlapping cleanup runs are skipped.
 
 Build the server with:
 

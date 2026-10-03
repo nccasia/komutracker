@@ -6,10 +6,10 @@ export function formatDuration(seconds) {
     return `${hours}:${minutes}:${remaining}`;
 }
 
-export function formatEventTime(date) {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+export function formatEventTime(date, locale) {
+    return date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 }
 
-export function formatEventDateTime(date) {
-    return date.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+export function formatEventDateTime(date, locale) {
+    return date.toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' });
 }

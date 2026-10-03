@@ -1,5 +1,9 @@
+import { t } from './i18n.js';
+
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 const UTC_OFFSET_MILLISECONDS = 7 * 60 * 60 * 1000;
+const CUSTOM_RANGE_WARNING_DAYS = 14;
+const RETAINED_CALENDAR_DAYS = 90;
 
 export const RANGE_MODES = Object.freeze({
     TODAY: 'today',
@@ -25,16 +29,45 @@ function dayRange(day) {
     return { start, end: new Date(start.getTime() + MILLISECONDS_PER_DAY) };
 }
 
+function createTranslatedError(key, values) {
+    const error = new Error(t(key, values));
+    error.translationKey = key;
+    error.translationValues = values;
+    return error;
+}
+
 export function isSupportedRangeMode(mode) {
     return SUPPORTED_RANGE_MODES.has(mode);
 }
 
-export function createDateRangeController({ options, customContainer, customStart, customEnd }) {
+export function createDateRangeController({ options, customContainer, customStart, customEnd, customWarning }) {
     const today = localDay();
+    const earliestRetainedDay = shiftDay(today, -(RETAINED_CALENDAR_DAYS - 1));
     let mode = RANGE_MODES.TODAY;
 
     customStart.value = shiftDay(today, -1);
     customEnd.value = today;
+    customStart.min = earliestRetainedDay;
+    customStart.max = today;
+    customEnd.min = earliestRetainedDay;
+    customEnd.max = today;
+
+    function selectedCustomDays() {
+        if (!customStart.value || !customEnd.value || customEnd.value < customStart.value) return 0;
+        return Math.round(
+            (dayRange(customEnd.value).start.getTime() - dayRange(customStart.value).start.getTime())
+            / MILLISECONDS_PER_DAY,
+        ) + 1;
+    }
+
+    function updateWarning() {
+        const days = selectedCustomDays();
+        const shouldWarn = mode === RANGE_MODES.CUSTOM && days > CUSTOM_RANGE_WARNING_DAYS;
+        customWarning.hidden = !shouldWarn;
+        customWarning.textContent = shouldWarn
+            ? t('range.warning', { days })
+            : '';
+    }
 
     function select(nextMode) {
         if (!isSupportedRangeMode(nextMode)) return;
@@ -45,6 +78,7 @@ export function createDateRangeController({ options, customContainer, customStar
             option.setAttribute('aria-pressed', String(option.dataset.range === mode));
         });
         customContainer.hidden = mode !== RANGE_MODES.CUSTOM;
+        updateWarning();
     }
 
     function restore({ timespan, start, end }) {
@@ -53,6 +87,7 @@ export function createDateRangeController({ options, customContainer, customStar
 
         if (start) customStart.value = start;
         if (end) customEnd.value = end;
+        updateWarning();
     }
 
     function getSelectedRange() {
@@ -75,7 +110,10 @@ export function createDateRangeController({ options, customContainer, customStar
         }
 
         if (!customStart.value || !customEnd.value || customEnd.value < customStart.value) {
-            throw new Error('Choose a valid custom start and end date.');
+            throw createTranslatedError('range.invalid');
+        }
+        if (customStart.value < earliestRetainedDay || customEnd.value > today) {
+            throw createTranslatedError('range.outOfBounds', { days: RETAINED_CALENDAR_DAYS });
         }
 
         return {
@@ -93,7 +131,9 @@ export function createDateRangeController({ options, customContainer, customStar
     options.forEach((option) => {
         option.addEventListener('click', () => select(option.dataset.range));
     });
+    customStart.addEventListener('input', updateWarning);
+    customEnd.addEventListener('input', updateWarning);
     select(mode);
 
-    return { restore, getSelectedRange, getQueryState };
+    return { restore, getSelectedRange, getQueryState, refreshLanguage: updateWarning };
 }

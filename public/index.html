@@ -13,37 +13,52 @@
 <body>
     <main class="shell">
         <header class="topbar">
-            <a class="brand" href="/" aria-label="Komutracker home">
+            <a class="brand" href="/" aria-label="Komutracker home" data-i18n-aria-label="brand.home">
                 <span class="brand-mark">
                     <img src="/logo.png" alt="Komutracker logo" width="100%" height="100%">
                 </span>
                 <span>Komutracker</span>
             </a>
+            <div class="language-switcher" role="group" aria-label="Select language"
+                data-i18n-aria-label="language.selector">
+                <button type="button" class="language-option active" data-language="en">English</button>
+                <button type="button" class="language-option" data-language="vi">Tiếng Việt</button>
+            </div>
         </header>
 
         <section class="hero">
-            <div class="eyebrow">Personal pulse</div>
+            <div class="eyebrow" data-i18n="hero.eyebrow">Personal pulse</div>
             <h1>Komutracker</h1>
-            <p>Look up a username to review active and AFK stretches across the day.</p>
+            <p data-i18n="hero.description">Look up a username to review active and AFK stretches across the day.</p>
             <form id="lookup-form" class="lookup" autocomplete="off">
                 <label class="field">
-                    <span>Username</span>
-                    <input id="hostname" name="hostname" placeholder="e.g. ngocanh" maxlength="128" required>
+                    <span data-i18n="form.username">Username</span>
+                    <input id="hostname" name="hostname" placeholder="e.g. ngocanh"
+                        data-i18n-placeholder="form.usernamePlaceholder" maxlength="128" required>
                 </label>
                 <div class="field field-span">
-                    <span>Timespan</span>
-                    <div class="range-options" role="group" aria-label="Select timespan">
-                        <button type="button" class="range-option active" data-range="today">Today</button>
-                        <button type="button" class="range-option" data-range="yesterday">Yesterday</button>
-                        <button type="button" class="range-option" data-range="7days">7 days</button>
-                        <button type="button" class="range-option" data-range="custom">Custom</button>
+                    <span data-i18n="form.timespan">Timespan</span>
+                    <div class="range-options" role="group" aria-label="Select timespan"
+                        data-i18n-aria-label="form.selectTimespan">
+                        <button type="button" class="range-option active" data-range="today"
+                            data-i18n="range.today">Today</button>
+                        <button type="button" class="range-option" data-range="yesterday"
+                            data-i18n="range.yesterday">Yesterday</button>
+                        <button type="button" class="range-option" data-range="7days"
+                            data-i18n="range.sevenDays">7 days</button>
+                        <button type="button" class="range-option" data-range="custom"
+                            data-i18n="range.custom">Custom</button>
                     </div>
                 </div>
                 <div id="custom-range" class="custom-range" hidden>
-                    <label class="field"><span>Start</span><input id="custom-start" type="date"></label>
-                    <label class="field"><span>End</span><input id="custom-end" type="date"></label>
+                    <label class="field"><span data-i18n="range.start">Start</span><input id="custom-start"
+                            type="date"></label>
+                    <label class="field"><span data-i18n="range.end">End</span><input id="custom-end"
+                            type="date"></label>
                 </div>
-                <button type="submit"><span>Search report</span><b aria-hidden="true">↗</b></button>
+                <button type="submit"><span data-i18n="form.search">Search report</span><b
+                        aria-hidden="true">↗</b></button>
+                <p id="custom-range-warning" class="range-warning" role="status" aria-live="polite" hidden></p>
             </form>
             <div id="message" class="message" role="status" aria-live="polite"></div>
         </section>
@@ -51,39 +66,47 @@
         <section id="report" class="report" hidden>
             <div class="report-heading">
                 <div>
-                    <div class="eyebrow">Daily snapshot</div>
+                    <div class="eyebrow" data-i18n="report.eyebrow">Daily snapshot</div>
                     <h2 id="report-title">—</h2>
                 </div>
                 <div id="report-timespan" class="timespan">—</div>
             </div>
 
             <div class="metrics">
-                <article class="metric metric-active"><span>Active time</span><strong
-                        id="active-time">00:00:00</strong><small>keyboard and presence</small></article>
-                <article class="metric metric-afk"><span>AFK time</span><strong
-                        id="afk-time">00:00:00</strong><small>away from input</small></article>
-                <article class="metric metric-coverage"><span>Tracked</span><strong id="coverage">00%</strong><small>of
-                        the selected day</small></article>
+                <article class="metric metric-active"><span data-i18n="metric.active">Active time</span><strong
+                        id="active-time">00:00:00</strong><small data-i18n="metric.activeHint">keyboard and
+                        presence</small></article>
+                <article class="metric metric-afk"><span data-i18n="metric.afk">AFK time</span><strong
+                        id="afk-time">00:00:00</strong><small data-i18n="metric.afkHint">away from input</small></article>
+                <article class="metric metric-coverage"><span data-i18n="metric.tracked">Tracked</span><strong
+                        id="coverage">00%</strong><small data-i18n="metric.trackedHint">of the selected
+                        timespan</small></article>
             </div>
 
             <article class="panel timeline-panel">
                 <div class="panel-heading">
-                    <div><span class="eyebrow">Day arc</span>
-                        <h3>Activity timeline</h3>
+                    <div><span class="eyebrow" data-i18n="timeline.eyebrow">Day arc</span>
+                        <h3 data-i18n="timeline.title">Activity timeline</h3>
                     </div>
                     <div class="timeline-tools">
-                        <div class="legend"><span><i class="dot dot-active"></i>Active</span><span><i
-                                    class="dot dot-afk"></i>AFK</span></div>
-                        <div class="zoom-tools" aria-label="Timeline zoom controls">
-                            <button type="button" id="zoom-out" title="Zoom out">−</button>
-                            <button type="button" id="zoom-reset" title="Reset zoom">100%</button>
-                            <button type="button" id="zoom-in" title="Zoom in">+</button>
+                        <div class="legend"><span><i class="dot dot-active"></i><span
+                                    data-i18n="timeline.active">Active</span></span><span><i
+                                    class="dot dot-afk"></i><span data-i18n="timeline.afk">AFK</span></span></div>
+                        <div class="zoom-tools" aria-label="Timeline zoom controls"
+                            data-i18n-aria-label="timeline.controls">
+                            <button type="button" id="zoom-out" title="Zoom out"
+                                data-i18n-title="timeline.zoomOut">−</button>
+                            <button type="button" id="zoom-reset" title="Reset zoom"
+                                data-i18n-title="timeline.resetZoom">100%</button>
+                            <button type="button" id="zoom-in" title="Zoom in"
+                                data-i18n-title="timeline.zoomIn">+</button>
                         </div>
                     </div>
                 </div>
                 <div id="timeline-viewport" class="timeline-viewport">
                     <div id="timeline-track" class="timeline-track">
-                        <div id="timeline" class="timeline" aria-label="Activity timeline"></div>
+                        <div id="timeline" class="timeline" aria-label="Activity timeline"
+                            data-i18n-aria-label="timeline.label"></div>
                         <div id="timeline-axis" class="axis"></div>
                     </div>
                 </div>
@@ -91,14 +114,14 @@
 
             <article class="panel events-panel">
                 <div class="panel-heading">
-                    <div><span class="eyebrow">Raw intervals</span>
-                        <h3>Event detail</h3>
+                    <div><span class="eyebrow" data-i18n="events.eyebrow">Raw intervals</span>
+                        <h3 data-i18n="events.title">Event detail</h3>
                     </div><span id="event-count" class="count">0 events</span>
                 </div>
                 <div id="events" class="events"></div>
             </article>
         </section>
-        <footer>Built for a quieter view of work rhythm. No window titles are collected.</footer>
+        <footer data-i18n="footer.text">Built for a quieter view of work rhythm. No window titles are collected.</footer>
     </main>
     <script type="module" src="/app.js"></script>
 </body>
