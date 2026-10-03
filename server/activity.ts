@@ -8,6 +8,19 @@ export interface AfkHeartbeat {
     data: { status?: string };
 }
 
+export function intervalGapMs(
+    firstStart: Date,
+    firstEnd: Date,
+    secondStart: Date,
+    secondEnd: Date,
+): number {
+    return Math.max(
+        secondStart.getTime() - firstEnd.getTime(),
+        firstStart.getTime() - secondEnd.getTime(),
+        0,
+    );
+}
+
 export function createActivity(dataSource: DataSource, config: AppConfig) {
     const events = dataSource.getRepository(AfkEventEntity);
 
@@ -29,12 +42,15 @@ export function createActivity(dataSource: DataSource, config: AppConfig) {
                 const latest = await repository.createQueryBuilder('event')
                     .where('event.user_id = :userId', { userId })
                     .orderBy('event.start_at', 'DESC')
+                    .addOrderBy('event.end_at', 'DESC')
                     .limit(1)
                     .setLock('pessimistic_write')
                     .getOne();
 
-                const gapMs = latest ? startAt.getTime() - latest.endAt.getTime() : Number.POSITIVE_INFINITY;
-                if (latest && latest.status === status && Math.abs(gapMs) <= mergeWindowMs) {
+                const gapMs = latest
+                    ? intervalGapMs(latest.startAt, latest.endAt, startAt, endAt)
+                    : Number.POSITIVE_INFINITY;
+                if (latest && latest.status === status && gapMs <= mergeWindowMs) {
                     await repository.update(latest.id, {
                         startAt: startAt < latest.startAt ? startAt : latest.startAt,
                         endAt: endAt > latest.endAt ? endAt : latest.endAt,

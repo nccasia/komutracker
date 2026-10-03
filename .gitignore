@@ -1,5 +1,7 @@
 build
+build-macos-universal
 dist
+dist-universal
 docs
 other
 old

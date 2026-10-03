@@ -6,6 +6,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "test": "node --test -r ts-node/register test/*.test.ts",
     "start": "npm run build && node dist/index.js",
     "migration:generate": "typeorm-ts-node-commonjs migration:generate ./migrations/${npm_config_name:-migration} -d ./typeorm-datasource.ts",
     "migration:create": "typeorm-ts-node-commonjs migration:create ./migrations/${npm_config_name:-migration}",

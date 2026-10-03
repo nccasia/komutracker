@@ -54,7 +54,7 @@
                     <div class="eyebrow">Daily snapshot</div>
                     <h2 id="report-title">—</h2>
                 </div>
-                <div id="report-email" class="email">—</div>
+                <div id="report-timespan" class="timespan">—</div>
             </div>
 
             <div class="metrics">
@@ -82,9 +82,11 @@
                     </div>
                 </div>
                 <div id="timeline-viewport" class="timeline-viewport">
-                    <div id="timeline" class="timeline" aria-label="Activity timeline"></div>
+                    <div id="timeline-track" class="timeline-track">
+                        <div id="timeline" class="timeline" aria-label="Activity timeline"></div>
+                        <div id="timeline-axis" class="axis"></div>
+                    </div>
                 </div>
-                <div id="timeline-axis" class="axis"></div>
             </article>
 
             <article class="panel events-panel">
@@ -98,7 +100,7 @@
         </section>
         <footer>Built for a quieter view of work rhythm. No window titles are collected.</footer>
     </main>
-    <script src="/app.js"></script>
+    <script type="module" src="/app.js"></script>
 </body>
 
 </html>
