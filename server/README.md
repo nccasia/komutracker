@@ -12,8 +12,13 @@ export DATABASE_URL="postgresql://user:password@127.0.0.1:5432/komutracker"
 export MEZON_CLIENT_ID="..."
 export MEZON_CLIENT_SECRET="..."
 export MEZON_REDIRECT_URI="https://your-domain.example/api/0/auth/callback"
+export MEZON_LEGACY_REDIRECT_URI="https://tracker-api.komu.vn/api/0/auth/callback"
 npm start
 ```
+
+`MEZON_REDIRECT_URI` is the callback for current clients. While legacy clients still use
+`tracker-api.komu.vn`, callbacks received on that exact host use `MEZON_LEGACY_REDIRECT_URI`.
+Both callback URLs must be registered with the Mezon OAuth client.
 
 Mezon uses `https://oauth2.mezon.ai/oauth2/token` and `https://oauth2.mezon.ai/userinfo` by default. Set `DATABASE_SSL=true` when PostgreSQL requires TLS. The pool defaults to 20 connections.
 

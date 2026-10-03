@@ -6,6 +6,7 @@ export interface OAuthConfig {
     tokenUrl: string;
     userInfoUrl: string;
     redirectUri: string;
+    legacyRedirectUri?: string;
 }
 
 export interface AppConfig {
@@ -36,6 +37,8 @@ export function loadConfig(): AppConfig {
             tokenUrl: process.env.MEZON_TOKEN_URL || 'https://oauth2.mezon.ai/oauth2/token',
             userInfoUrl: process.env.MEZON_USERINFO_URL || 'https://oauth2.mezon.ai/userinfo',
             redirectUri: process.env.MEZON_REDIRECT_URI || process.env.OAUTH_REDIRECT_URI || '',
+            legacyRedirectUri: process.env.MEZON_LEGACY_REDIRECT_URI
+                || 'https://tracker-api.komu.vn/api/0/auth/callback',
         },
     };
 }

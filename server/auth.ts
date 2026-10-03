@@ -45,8 +45,8 @@ function profileFrom(value: Record<string, unknown>): UserProfile {
     };
 }
 
-async function exchangeCode(config: AppConfig, code: string, state: string): Promise<OAuthTokens> {
-    if (!config.oauth.clientId || !config.oauth.clientSecret || !config.oauth.redirectUri) {
+async function exchangeCode(config: AppConfig, code: string, state: string, redirectUri: string): Promise<OAuthTokens> {
+    if (!config.oauth.clientId || !config.oauth.clientSecret || !redirectUri) {
         throw new Error('Mezon OAuth configuration is incomplete');
     }
     const form = new URLSearchParams({
@@ -55,7 +55,7 @@ async function exchangeCode(config: AppConfig, code: string, state: string): Pro
         state,
         client_id: config.oauth.clientId,
         client_secret: config.oauth.clientSecret,
-        redirect_uri: config.oauth.redirectUri,
+        redirect_uri: redirectUri,
     });
     const response = await fetch(config.oauth.tokenUrl, {
         method: 'POST',
@@ -116,13 +116,13 @@ export function createAuth(dataSource: DataSource, config: AppConfig) {
             return config.authToken || user.authToken || null;
         },
 
-        async callback(query: URLSearchParams): Promise<UserProfile> {
+        async callback(query: URLSearchParams, redirectUri: string): Promise<UserProfile> {
             const deviceId = query.get('state');
             const code = query.get('code');
             if (!deviceId || deviceId.length > 128 || !code) throw new Error('Mezon callback requires device state and code');
             const user = await users.findOneBy({ deviceId });
             if (!user) throw new Error('Unknown device login request');
-            const tokens = await exchangeCode(config, code, deviceId);
+            const tokens = await exchangeCode(config, code, deviceId, redirectUri);
             const profile = await fetchProfile(config, tokens);
 
             await dataSource.transaction(async (manager) => {

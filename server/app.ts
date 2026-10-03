@@ -11,7 +11,7 @@ import { startActivityCleanupJob } from './cleanup';
 
 interface AuthService {
     poll(deviceId: string): Promise<string | null>;
-    callback(query: URLSearchParams): Promise<UserProfile | null>;
+    callback(query: URLSearchParams, redirectUri: string): Promise<UserProfile | null>;
     session(request: Request): Promise<SessionUser | null>;
     logout(): void;
 }
@@ -35,6 +35,18 @@ interface AppDependencies {
 
 const MAX_BODY = '64kb';
 const PUBLIC_DIR = path.join(__dirname, '..', '..', 'public');
+const LEGACY_OAUTH_CALLBACK_HOST = 'tracker-api.komu.vn';
+
+export function selectOAuthRedirectUri(config: AppConfig, requestHostname: string): string {
+    const hostname = requestHostname.trim().toLowerCase().replace(/\.$/, '');
+
+    // TODO: Remove this legacy redirect URI fallback once deprecated clients use tracker.komu.vn.
+    if (hostname === LEGACY_OAUTH_CALLBACK_HOST) {
+        return config.oauth.legacyRedirectUri || 'https://tracker-api.komu.vn/api/0/auth/callback';
+    }
+
+    return config.oauth.redirectUri;
+}
 
 function asyncRoute(handler: (request: Request, response: Response, next: NextFunction) => Promise<void>) {
     return (request: Request, response: Response, next: NextFunction): void => {
@@ -72,7 +84,11 @@ export function createApp({ dataSource, config, auth: providedAuth, activity: pr
     app.get('/api/0/auth/success', (_request, response) => response.json({ message: 'Logged in successfully, welcome to komutracker!' }));
 
     app.get('/api/0/auth/callback', asyncRoute(async (request, response) => {
-        const profile = await auth.callback(new URL(request.originalUrl, 'http://localhost').searchParams);
+        const redirectUri = selectOAuthRedirectUri(config, request.hostname);
+        const profile = await auth.callback(
+            new URL(request.originalUrl, 'http://localhost').searchParams,
+            redirectUri,
+        );
         response.redirect(`/?username=${profile?.email.split('@')[0] || 'username'}`);
     }));
 
