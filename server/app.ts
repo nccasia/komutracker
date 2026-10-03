@@ -10,7 +10,6 @@ import { createReports, UserNotFoundError } from './reports';
 import { startActivityCleanupJob } from './cleanup';
 
 interface AuthService {
-    ensureUser(deviceId: string): Promise<unknown>;
     poll(deviceId: string): Promise<string | null>;
     callback(query: URLSearchParams): Promise<UserProfile | null>;
     session(request: Request): Promise<SessionUser | null>;
@@ -88,10 +87,6 @@ export function createApp({ dataSource, config, auth: providedAuth, activity: pr
     }));
 
     app.get('/api/0/auth/me', asyncRoute(async (request, response) => {
-        // TODO: Remove this legacy user bootstrap once deprecated clients call /api/0/auth before /api/0/auth/me.
-        const deviceId = request.header('device-id');
-        if (deviceId) await auth.ensureUser(deviceId);
-
         const session = await requireSession(auth, request, response);
         if (!session) return;
         response.json({ name: session.name, email: session.email });
