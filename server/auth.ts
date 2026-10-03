@@ -109,6 +109,9 @@ export function createAuth(dataSource: DataSource, config: AppConfig) {
     }
 
     return {
+        // TODO: Remove this legacy ensureUser once deprecated clients call /api/0/auth before /api/0/auth/me.
+        ensureUser,
+
         async poll(deviceId: string): Promise<string | null> {
             const user = await ensureUser(deviceId);
             return config.authToken || user.authToken || null;
