@@ -114,10 +114,10 @@ int main(int argc, char **argv) {
     if (version) { printf("komutracker %s\n", KOMUTRACKER_VERSION); return 0; }
     verbose_logging = verbose;
     if (testing) { timeout = 20.0; poll_time = 1.0; }
-    if (!server) server = testing ? "http://127.0.0.1:5666" : "https://tracker-api.komu.vn";
+    if (!server) server = testing ? "http://127.0.0.1:5666" : "https://tracker.komu.vn";
     if (!auth_url) auth_url = "https://oauth2.mezon.ai";
     if (!client_id) client_id = "1840672452439445504";
-    if (!redirect_uri) redirect_uri = "https://tracker-api.komu.vn/api/0/auth/callback";
+    if (!redirect_uri) redirect_uri = "https://tracker.komu.vn/api/0/auth/callback";
     if (timeout <= 0 || poll_time <= 0 || window_poll_time <= 0 || timeout < poll_time || auth_timeout <= 0) return 2;
 
     signal(SIGINT, stop); signal(SIGTERM, stop);

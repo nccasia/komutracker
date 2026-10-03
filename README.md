@@ -103,7 +103,7 @@ make -C build test
 
 ## Login and run
 
-The API server defaults to `https://tracker-api.komu.vn`. The OAuth callback is `https://tracker-api.komu.vn/api/0/auth/callback`, matching the URL registered for the Mezon OAuth client.
+The API server defaults to `https://tracker.komu.vn`. The OAuth callback is `https://tracker.komu.vn/api/0/auth/callback`, matching the URL registered for the Mezon OAuth client.
 
 On first run, the CLI creates a device ID, opens the Mezon login page in the default browser, and waits for authentication. After login completes in the browser, control returns to the CLI and the token is saved for future runs.
 
@@ -145,7 +145,7 @@ Manual credentials remain supported for automation:
 
 ```bash
 ./build/komutracker \
-  --server https://tracker-api.komu.vn \
+  --server https://tracker.komu.vn \
   --token "YOUR_TOKEN" \
   --device-id "YOUR_DEVICE_ID"
 ```
@@ -153,7 +153,7 @@ Manual credentials remain supported for automation:
 Or configure them through environment variables:
 
 ```bash
-export AW_SERVER_URL="https://tracker-api.komu.vn"
+export AW_SERVER_URL="https://tracker.komu.vn"
 export AW_AUTH_TOKEN="YOUR_TOKEN"
 export AW_DEVICE_ID="YOUR_DEVICE_ID"
 
