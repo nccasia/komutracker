@@ -50,6 +50,7 @@ export const AfkEventEntity = new EntitySchema<AfkEventRecord>({
     },
     indices: [
         { name: 'idx_afk_events_user_start_end', columns: ['userId', 'startAt', 'endAt'] },
+        { name: 'idx_afk_events_user_end_start', columns: ['userId', 'endAt', 'startAt', 'id'] },
         { name: 'idx_afk_events_start_end_user', columns: ['startAt', 'endAt', 'userId'] },
     ],
 });

@@ -41,8 +41,9 @@ export function createActivity(dataSource: DataSource, config: AppConfig) {
                 const repository = manager.getRepository<AfkEventRecord>(AfkEventEntity);
                 const latest = await repository.createQueryBuilder('event')
                     .where('event.user_id = :userId', { userId })
-                    .orderBy('event.start_at', 'DESC')
-                    .addOrderBy('event.end_at', 'DESC')
+                    .orderBy('event.end_at', 'DESC')
+                    .addOrderBy('event.start_at', 'DESC')
+                    .addOrderBy('event.id', 'DESC')
                     .limit(1)
                     .setLock('pessimistic_write')
                     .getOne();

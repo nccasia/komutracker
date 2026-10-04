@@ -44,7 +44,7 @@ Device-Id: <device id>
 
 The server uses a fixed `mergeWindowSeconds` of 370 seconds by default. Overlapping heartbeats with the same status are always merged; for non-overlapping heartbeats, this value is the maximum gap that can be merged. Client `pulsetime` query parameters are ignored for merge decisions. Override the server policy with `MERGE_WINDOW_SECONDS` if needed.
 
-AFK events are stored with `status`, `start_at`, and `end_at`. Consecutive heartbeats with the same status update the latest row inside a PostgreSQL transaction; a new row is created when the status changes or a non-overlapping gap exceeds the merge window. TypeORM synchronizes the schema outside production; with `NODE_ENV=production`, migrations run before the server listens.
+AFK events are stored with `status`, `start_at`, and `end_at`. Consecutive heartbeats with the same status update the row with the latest end time inside a PostgreSQL transaction; writes are serialized per user so concurrent first heartbeats cannot create duplicate rows. A new row is created when the status changes or a non-overlapping gap exceeds the merge window. Run the TypeORM migrations before starting a production release.
 
 The all-users report requires `X-API-Key`; the per-user event query is public and returns 404 when the hostname is not found. The event query uses the `(user_id, start_at, end_at)` composite index and the daily report filters event overlap before aggregating, so unrelated users and periods are not scanned into the result.
 
