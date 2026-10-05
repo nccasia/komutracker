@@ -3,6 +3,10 @@ import { createElement } from './dom.js';
 import { formatDuration, formatEventTime } from './format.js';
 import { getLocale, t } from './i18n.js';
 
+const HOURS_PER_WORKING_DAY = 8;
+const SECONDS_PER_HOUR = 60 * 60;
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+
 function summarizeEvents(events, range) {
     const totals = events.reduce((summary, event) => {
         const seconds = clipEventToRange(event, range).seconds;
@@ -11,9 +15,10 @@ function summarizeEvents(events, range) {
         return summary;
     }, { active: 0, afk: 0 });
 
-    const rangeSeconds = (range.end - range.start) / 1000;
-    const trackedPercentage = rangeSeconds > 0
-        ? Math.min(100, Math.round(((totals.active + totals.afk) / rangeSeconds) * 100))
+    const selectedDays = (range.end - range.start) / MILLISECONDS_PER_DAY;
+    const workingSeconds = selectedDays * HOURS_PER_WORKING_DAY * SECONDS_PER_HOUR;
+    const trackedPercentage = workingSeconds > 0
+        ? Math.min(100, Math.round(((totals.active + totals.afk) / workingSeconds) * 100))
         : 0;
 
     return { ...totals, trackedPercentage };
