@@ -94,9 +94,9 @@ export function createReports(dataSource: DataSource, now: () => Date = () => ne
             const users = await dataSource.query<{ id: string }[]>(`
                 SELECT id
                 FROM users
-                WHERE lower(split_part(email, '@', 1)) = $1
+                WHERE lower(split_part(email, '@', 1)) = $1 OR lower(name) = $2
                 LIMIT 1
-            `, [normalizedHostname]);
+            `, [normalizedHostname, normalizedHostname]);
             if (!users[0]) throw new UserNotFoundError();
 
             return dataSource.query<EventDetail[]>(`
