@@ -3,8 +3,8 @@
 #include "desktop.h"
 #include "tray.h"
 
-#include <shellapi.h>
 #include <windows.h>
+#include <shellapi.h>
 #include <wchar.h>
 
 #define IDI_KOMUTRACKER_APP 101
