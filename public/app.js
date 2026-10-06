@@ -2,6 +2,7 @@ import { fetchActivityEvents } from './js/activity-api.js';
 import { createDateRangeController } from './js/date-range.js';
 import { getRequiredElement } from './js/dom.js';
 import { initializeI18n, t } from './js/i18n.js';
+import { redirectLegacyActivityUrl } from './js/legacy-url.js';
 import { readLookupParams, persistLookupParams } from './js/lookup-params.js';
 import { createReportView } from './js/report-view.js';
 import { createTimelineView } from './js/timeline-view.js';
@@ -119,4 +120,4 @@ document.addEventListener('languagechange', () => {
         );
     }
 });
-initialize();
+if (!redirectLegacyActivityUrl()) initialize();
