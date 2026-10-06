@@ -18,7 +18,7 @@ function summarizeEvents(events, range) {
     const selectedDays = (range.end - range.start) / MILLISECONDS_PER_DAY;
     const workingSeconds = selectedDays * HOURS_PER_WORKING_DAY * SECONDS_PER_HOUR;
     const trackedPercentage = workingSeconds > 0
-        ? Math.min(100, Math.round(((totals.active + totals.afk) / workingSeconds) * 100))
+        ? Math.min(100, Math.round((totals.active / workingSeconds) * 100))
         : 0;
 
     return { ...totals, trackedPercentage };
