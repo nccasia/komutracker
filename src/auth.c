@@ -104,6 +104,34 @@ int auth_remove_token(void) {
     return remove(path) == 0 ? 0 : -1;
 }
 
+int auth_read_profile(char *name, size_t name_size, char *email, size_t email_size) {
+    char path[2048], value[1200];
+    if (!name || !name_size || !email || !email_size ||
+        dirs_profile_path(path, sizeof(path)) || read_file(path, value, sizeof(value))) return -1;
+    char *newline = strchr(value, '\n');
+    if (!newline) return -1;
+    *newline = '\0';
+    const char *saved_email = newline + 1;
+    if (!*value || strlen(value) >= name_size || strlen(saved_email) >= email_size) return -1;
+    strcpy(name, value);
+    strcpy(email, saved_email);
+    return 0;
+}
+
+int auth_save_profile(const char *name, const char *email) {
+    if (!name || !email || strchr(name, '\n') || strchr(email, '\n')) return -1;
+    char path[2048], value[1200];
+    if (dirs_profile_path(path, sizeof(path))) return -1;
+    int count = snprintf(value, sizeof(value), "%s\n%s", name, email);
+    return count < 0 || count >= (int)sizeof(value) ? -1 : write_private(path, value);
+}
+
+int auth_remove_profile(void) {
+    char path[2048];
+    if (dirs_profile_path(path, sizeof(path))) return -1;
+    return remove(path) == 0 ? 0 : -1;
+}
+
 int auth_build_url(char *out, size_t size, const auth_options *options, const char *device_id) {
     CURL *curl = curl_easy_init();
     if (!curl) return -1;
@@ -145,8 +173,14 @@ int auth_open_browser(const char *url) {
 #endif
 }
 
-int auth_login(http_client *client, const auth_options *options, char *token, size_t token_size,
-               volatile sig_atomic_t *running) {
+int auth_login(http_client *client, const auth_options *options,
+               char *device_id, size_t device_id_size,
+               char *token, size_t token_size, volatile sig_atomic_t *running) {
+    /* A device ID identifies one concrete authenticated session. Always rotate
+       it when OAuth actually starts so polling cannot reuse an older token. */
+    if (auth_generate_device_id(device_id, device_id_size)) return -1;
+    client->device_id = device_id;
+
     char url[4096];
     if (auth_build_url(url, sizeof(url), options, client->device_id)) return -1;
     printf("Open this URL to log in:\n%s\n", url);

@@ -1,0 +1,114 @@
+#if !defined(_WIN32) && !defined(__APPLE__)
+
+#include "tray.h"
+
+#include <gtk/gtk.h>
+#ifdef KOMUTRACKER_USE_AYATANA
+#include <libayatana-appindicator/app-indicator.h>
+#else
+#include <libappindicator/app-indicator.h>
+#endif
+
+#ifndef KOMUTRACKER_TRAY_ICON_PATH
+#define KOMUTRACKER_TRAY_ICON_PATH "/usr/share/pixmaps/komutracker-tray.png"
+#endif
+
+static tray_callbacks callbacks;
+static AppIndicator *indicator;
+static GtkWidget *menu;
+static GtkWidget *account_item;
+static GtkWidget *status_item;
+static GtkWidget *dashboard_item;
+static GtkWidget *auth_item;
+static GtkWidget *logout_item;
+
+static void auth_action(GtkMenuItem *item, gpointer context) {
+    (void)item;
+    (void)context;
+    if (callbacks.auth_action) callbacks.auth_action(callbacks.context);
+}
+
+static void logout_action(GtkMenuItem *item, gpointer context) {
+    (void)item;
+    (void)context;
+    if (callbacks.logout) callbacks.logout(callbacks.context);
+}
+
+static void dashboard_action(GtkMenuItem *item, gpointer context) {
+    (void)item;
+    (void)context;
+    if (callbacks.open_dashboard) callbacks.open_dashboard(callbacks.context);
+}
+
+static void quit_action(GtkMenuItem *item, gpointer context) {
+    (void)item;
+    (void)context;
+    if (callbacks.quit) callbacks.quit(callbacks.context);
+}
+
+static GtkWidget *new_item(const char *label, GCallback callback) {
+    GtkWidget *item = gtk_menu_item_new_with_label(label);
+    if (callback) g_signal_connect(item, "activate", callback, NULL);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+    return item;
+}
+
+int tray_init(const tray_callbacks *provided_callbacks) {
+    callbacks = *provided_callbacks;
+    if (!gtk_init_check(NULL, NULL)) return -1;
+
+    indicator = app_indicator_new("komutracker", "komutracker-tray",
+                                  APP_INDICATOR_CATEGORY_APPLICATION_STATUS);
+    if (!indicator) return -1;
+    app_indicator_set_icon_full(indicator, KOMUTRACKER_TRAY_ICON_PATH, "KomuTracker");
+    app_indicator_set_status(indicator, APP_INDICATOR_STATUS_ACTIVE);
+
+    menu = gtk_menu_new();
+    account_item = new_item("Not Logged In", NULL);
+    status_item = new_item("Starting…", NULL);
+    gtk_widget_set_sensitive(account_item, FALSE);
+    gtk_widget_set_sensitive(status_item, FALSE);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), gtk_separator_menu_item_new());
+    dashboard_item = new_item("Open Dashboard", G_CALLBACK(dashboard_action));
+    auth_item = new_item("Log In", G_CALLBACK(auth_action));
+    logout_item = new_item("Log Out", G_CALLBACK(logout_action));
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), gtk_separator_menu_item_new());
+    new_item("Quit KomuTracker", G_CALLBACK(quit_action));
+
+    gtk_widget_show_all(menu);
+    app_indicator_set_menu(indicator, GTK_MENU(menu));
+    return 0;
+}
+
+void tray_update(const tray_view *view) {
+    gtk_menu_item_set_label(GTK_MENU_ITEM(account_item), view->account_name);
+    gtk_menu_item_set_label(GTK_MENU_ITEM(status_item), view->status_text);
+    gtk_widget_set_sensitive(dashboard_item, view->logged_in);
+
+    if (view->status == TRAY_AUTHENTICATING) {
+        gtk_menu_item_set_label(GTK_MENU_ITEM(auth_item), "Cancel Login");
+        gtk_widget_show(auth_item);
+        gtk_widget_hide(logout_item);
+    } else if (view->logged_in) {
+        gtk_widget_hide(auth_item);
+        gtk_widget_show(logout_item);
+    } else {
+        gtk_menu_item_set_label(GTK_MENU_ITEM(auth_item), "Log In");
+        gtk_widget_show(auth_item);
+        gtk_widget_hide(logout_item);
+    }
+}
+
+void tray_poll(void) {
+    while (gtk_events_pending()) gtk_main_iteration_do(FALSE);
+}
+
+void tray_cleanup(void) {
+    if (indicator) app_indicator_set_status(indicator, APP_INDICATOR_STATUS_PASSIVE);
+    if (menu) gtk_widget_destroy(menu);
+    if (indicator) g_object_unref(indicator);
+    indicator = NULL;
+    menu = NULL;
+}
+
+#endif

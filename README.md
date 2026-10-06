@@ -1,6 +1,6 @@
 # komutracker
 
-Native command-line activity tracker written in C. One process detects AFK state and the process owning the currently focused window, then sends ActivityWatch-compatible heartbeats to separate server buckets. It does not enumerate all running processes and has no GUI.
+Native activity tracker written in C. KomuTracker is available as a desktop tray/menu-bar application and as a command-line client. It detects AFK state and sends ActivityWatch-compatible heartbeats without enumerating background processes.
 
 ## Install dependencies
 
@@ -10,7 +10,7 @@ The build requires the libcurl development library, not only the `curl` command-
 
 ```bash
 sudo apt update
-sudo apt install build-essential cmake pkg-config libcurl4-openssl-dev libx11-dev libxss-dev
+sudo apt install build-essential cmake pkg-config libcurl4-openssl-dev libx11-dev libxss-dev libgtk-3-dev libayatana-appindicator3-dev
 ```
 
 Verify libcurl installation:
@@ -29,13 +29,13 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 ### Fedora/RHEL
 
 ```bash
-sudo dnf install gcc make cmake pkgconf-pkg-config libcurl-devel libX11-devel libXScrnSaver-devel
+sudo dnf install gcc make cmake pkgconf-pkg-config libcurl-devel libX11-devel libXScrnSaver-devel gtk3-devel libappindicator-gtk3-devel
 ```
 
 ### Arch Linux
 
 ```bash
-sudo pacman -S --needed base-devel cmake pkgconf curl libx11 libxss
+sudo pacman -S --needed base-devel cmake pkgconf curl libx11 libxss gtk3 libappindicator-gtk3
 ```
 
 ### macOS
@@ -61,7 +61,7 @@ Install Visual Studio Build Tools with the **Desktop development with C++** work
 ```powershell
 git clone https://github.com/microsoft/vcpkg.git
 .\vcpkg\bootstrap-vcpkg.bat
-.\vcpkg\vcpkg.exe install curl:x64-windows
+.\vcpkg\vcpkg.exe install curl:x64-windows-static
 ```
 
 Configure using the vcpkg toolchain from a Developer PowerShell:
@@ -69,7 +69,7 @@ Configure using the vcpkg toolchain from a Developer PowerShell:
 ```powershell
 cmake -S . -B build `
   -DCMAKE_TOOLCHAIN_FILE="C:/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake" `
-  -DVCPKG_TARGET_TRIPLET=x64-windows
+  -DVCPKG_TARGET_TRIPLET=x64-windows-static
 cmake --build build --config Release
 ```
 
@@ -89,6 +89,44 @@ CMake generates a Makefile in `build`, so after configuring you can also build w
 make -C build
 ```
 
+The build produces both the CLI and desktop application:
+
+- macOS: `build/KomuTracker.app` and `build/komutracker`.
+- Windows: `build/KomuTracker.exe` and `build/komutracker-cli.exe`.
+- Ubuntu: `build/komutracker-desktop` and `build/komutracker`.
+
+The desktop application only shows a tray/menu-bar icon. Use its menu to log in,
+log out, open the dashboard, inspect connection/tracking status, or quit.
+
+## Package a release
+
+Build packages on their native operating system after a Release build:
+
+```bash
+cpack --config build/CPackConfig.cmake -B dist
+```
+
+Generated artifacts are:
+
+- Windows: a ZIP containing the standalone GUI and CLI executables.
+- macOS: a DMG containing `KomuTracker.app`.
+- Ubuntu: a DEB that installs the executable, AppIndicator launcher, desktop entry, and icons.
+
+Public macOS and Windows releases should be code-signed. The generated local DMG and
+ZIP are otherwise complete but operating-system security prompts may identify them as
+coming from an unknown developer.
+
+On Ubuntu, install and launch the package with:
+
+```bash
+sudo apt install ./dist/komutracker-*-ubuntu-amd64.deb
+komutracker-desktop
+```
+
+The desktop entry uses `Terminal=false`, so launching KomuTracker from the Ubuntu
+application menu does not display a terminal. Git tags matching `v*` run the GitHub
+Actions workflow and attach all three platform packages to the release.
+
 ## Test
 
 ```bash
@@ -104,6 +142,12 @@ make -C build test
 ## Login and run
 
 The API server defaults to `https://tracker.komu.vn`. The OAuth callback is `https://tracker.komu.vn/api/0/auth/callback`, matching the URL registered for the Mezon OAuth client.
+
+For normal desktop use, launch `KomuTracker.app`, `KomuTracker.exe`, or KomuTracker
+from Ubuntu's application menu. Select **Log In** from the tray menu; the browser opens
+for OAuth and the tray changes to the authenticated user's name when login completes.
+Selecting **Log Out** stops tracking and removes the saved credentials without closing
+the tray application.
 
 On first run, the CLI creates a device ID, opens the Mezon login page in the default browser, and waits for authentication. After login completes in the browser, control returns to the CLI and the token is saved for future runs.
 
@@ -148,16 +192,6 @@ Manual credentials remain supported for automation:
   --server https://tracker.komu.vn \
   --token "YOUR_TOKEN" \
   --device-id "YOUR_DEVICE_ID"
-```
-
-Or configure them through environment variables:
-
-```bash
-export AW_SERVER_URL="https://tracker.komu.vn"
-export AW_AUTH_TOKEN="YOUR_TOKEN"
-export AW_DEVICE_ID="YOUR_DEVICE_ID"
-
-./build/komutracker
 ```
 
 Configure AFK timeout and polling:
@@ -227,17 +261,9 @@ Saved credentials:
 
 Token and device files use owner-only permissions on POSIX systems. Tokens are never printed by the CLI.
 
-Environment variables:
-
-```text
-AW_SERVER_URL
-AW_AUTH_TOKEN
-AW_DEVICE_ID
-AW_AUTH_URL
-AW_CLIENT_ID
-AW_REDIRECT_URI
-AW_AUTH_TIMEOUT
-```
+Application defaults are defined once in `src/config.c` and shared by the desktop
+and CLI clients. KomuTracker does not read application settings or credentials from
+environment variables. The CLI flags above remain available for testing and automation.
 
 ## Logs
 

@@ -158,7 +158,18 @@ int http_heartbeat(const http_client *client, const char *bucket, const char *ti
     snprintf(url, sizeof(url), "%s/api/0/buckets/%s/heartbeat?pulsetime=%.3f", client->base_url, escaped, pulsetime);
     snprintf(body, sizeof(body), "{\"timestamp\":\"%s\",\"duration\":%.3f,\"data\":{\"status\":\"%s\"}}", timestamp, duration, afk ? "afk" : "not-afk");
     curl_free(escaped); curl_easy_cleanup(curl);
-    return post_ok(client, url, body);
+
+    char response[1024];
+    long status;
+    int result = request(client, url, "POST", body, response, sizeof(response), &status);
+    if (result || status < 200 || status >= 300) {
+        if (client->verbose) {
+            fprintf(stderr, "Heartbeat request failed: HTTP %ld%s%s\n", status,
+                    response[0] ? ": " : "", response);
+        }
+        return -1;
+    }
+    return 0;
 }
 
 int http_parse_json_string(const char *json, char *out, size_t size) {

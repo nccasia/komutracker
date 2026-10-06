@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=KomuTracker
+Comment=Track active and AFK time
+Exec=komutracker-desktop
+Icon=com.komu.KomuTracker
+Terminal=false
+Categories=Utility;
+StartupNotify=false

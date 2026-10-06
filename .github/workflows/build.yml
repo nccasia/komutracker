@@ -1,168 +1,89 @@
-name: Build
+name: Desktop builds
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
+    tags: ['v*']
   pull_request:
-    branches: [ master ]
-  #release:
-  #  types: [published]
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
-  build:
-    name: ${{ matrix.os }}, py-${{ matrix.python_version }}, node-${{ matrix.node_version }}
-    runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.experimental }}
-    env:
-      RELEASE: false
-      # sets the macOS version target, see: https://users.rust-lang.org/t/compile-rust-binary-for-older-versions-of-mac-osx/38695
-      MACOSX_DEPLOYMENT_TARGET: 10.14
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
-        python_version: [3.8]
-        node_version: [16]
-        experimental: [false]
-        #include:
-        #  - os: ubuntu-latest
-        #    python_version: 3.9
-        #    node_version: 16
-        #    experimental: true
+  macos:
+    runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: 'recursive'
-    # Needed for `git describe --tags --abbrev=0` to work (used for getting the latest version tag)
-    - name: Fetch full git history
-      run: git fetch --prune --unshallow --tags
-    - name: Set up Python
-      uses: actions/setup-python@v1
-      with:
-        python-version: ${{ matrix.python_version }}
-    - name: Set up Node
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node_version }}
-    - name: Set up Rust nightly
-      uses: actions-rs/toolchain@v1
-      id: toolchain
-      with:
-        profile: minimal
-        toolchain: nightly
-        override: true
-    - name: Get npm cache dir
-      id: npm-cache-dir
-      run: |
-        echo "::set-output name=dir::$(npm config get cache)"
-    - uses: actions/cache@v1
-      name: Cache npm
-      env:
-        cache-name: node
-      with:
-        path: ${{ steps.npm-cache-dir.outputs.dir }}
-        key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-${{ env.cache-name }}-
-    - name: Cache cargo build
-      uses: actions/cache@v1
-      if: runner.os != 'macOS'  # cache doesn't seem to behave nicely on macOS, see: https://github.com/nccasia/aw-server-rust/issues/180
-      env:
-        cache-name: cargo-build-target
-      with:
-        path: aw-server-rust/target
-        # key needs to contain rustc_hash due to https://github.com/nccasia/aw-server-rust/issues/180
-        key: ${{ runner.os }}-${{ env.cache-name }}-${{ steps.toolchain.outputs.rustc_hash }}-${{ hashFiles('**/Cargo.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-${{ env.cache-name }}-${{ steps.toolchain.outputs.rustc_hash }}-
-    - name: Install APT dependencies
-      shell: bash
-      if: "startsWith(runner.os, 'linux')"
-      run: |
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14
+      - name: Build
+        run: cmake --build build --parallel
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+      - name: Package DMG
+        run: cpack --config build/CPackConfig.cmake -B dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KomuTracker-macOS
+          path: dist/*.dmg
+      - uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          files: dist/*.dmg
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install static libcurl
+        shell: pwsh
+        run: vcpkg install curl:x64-windows-static
+      - name: Configure
+        shell: pwsh
+        run: >-
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          -DVCPKG_TARGET_TRIPLET=x64-windows-static
+          -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+      - name: Build
+        run: cmake --build build --parallel
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+      - name: Package ZIP
+        run: cpack --config build/CPackConfig.cmake -B dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KomuTracker-Windows
+          path: dist/*.zip
+      - uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          files: dist/*.zip
+
+  ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build dependencies
+        run: |
           sudo apt-get update
-          # Unsure which of these are actually necessary...
-          sudo apt-get install -y \
-            qt5-default \
-            qtwayland5 \
-            libqt5x11extras5 \
-            libfontconfig1 \
-            libxcb1 \
-            libfontconfig1-dev \
-            libfreetype6-dev \
-            libx11-dev \
-            libxcursor-dev \
-            libxext-dev \
-            libxfixes-dev \
-            libxft-dev \
-            libxi-dev \
-            libxrandr-dev \
-            libxrender-dev
-
-    - name: Install dependencies
-      shell: bash
-      run: |
-        if [ "$RUNNER_OS" == "Windows" ]; then
-          choco install innosetup
-        fi
-        pip install poetry virtualenv
-    - name: Build
-      shell: bash
-      run: |
-        python -m virtualenv venv
-        source venv/bin/activate || source venv/Scripts/activate
-        poetry install
-        make build
-    - name: Run tests
-      shell: bash
-      run: |
-        source venv/bin/activate || source venv/Scripts/activate
-        make test
-
-    # Don't run integration tests on Windows, doesn't work for some reason
-    - name: Run integration tests
-      if: "!startsWith(runner.os, 'windows')"
-      run: |
-        source venv/bin/activate || source venv/Scripts/activate
-        make test-integration
-
-    - name: Package
-      shell: bash
-      run: |
-        source venv/bin/activate || source venv/Scripts/activate
-        poetry install  # run again to ensure we have the correct version of PyInstaller
-        make package
-
-    - name: Package dmg
-      if: startsWith(runner.os, 'macOS')
-      run: |
-        # Load certificates
-        # TODO: Only load key & sign if env vars for signing exists
-        ./scripts/ci/import-macos-p12.sh
-
-        # Build .app and .dmg
-        source venv/bin/activate
-        make dist/KomuTracker.dmg
-        codesign --verbose -s ${APPLE_PERSONALID} dist/KomuTracker.dmg
-
-        # Run prechecks
-        brew install akeru-inc/tap/xcnotary
-        xcnotary precheck dist/KomuTracker.app
-        xcnotary precheck dist/KomuTracker.dmg
-
-        # Notarize
-        make dist/notarize
-        mv dist/KomuTracker.dmg dist/komutracker-$(scripts/package/getversion.sh)-macos-x86_64.dmg
-      env:
-        APPLE_EMAIL: ${{ secrets.APPLE_EMAIL }}
-        APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-        APPLE_PERSONALID: ${{ secrets.APPLE_TEAMID }} # APPLE_PERSONAL_ID == APPLE_TEAM_ID for personal accounts
-        APPLE_TEAMID: ${{ secrets.APPLE_TEAMID }}
-        CERTIFICATE_MACOS_P12_BASE64: ${{ secrets.CERTIFICATE_MACOS_P12_BASE64 }}
-        CERTIFICATE_MACOS_P12_PASSWORD: ${{ secrets.CERTIFICATE_MACOS_P12_PASSWORD }}
-
-    - name: Upload packages
-      uses: actions/upload-artifact@v2-preview
-      with:
-        name: builds-${{ runner.os }}-py${{ matrix.python_version }}
-        path: dist/komutracker-*.*
-
+          sudo apt-get install -y ninja-build libcurl4-openssl-dev libx11-dev libxss-dev libgtk-3-dev libayatana-appindicator3-dev
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+      - name: Build
+        run: cmake --build build --parallel
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+      - name: Package DEB
+        run: cpack --config build/CPackConfig.cmake -B dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KomuTracker-Ubuntu
+          path: dist/*.deb
+      - uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          files: dist/*.deb

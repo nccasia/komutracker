@@ -64,6 +64,22 @@ int dirs_token_path(char *out, size_t size) {
 #endif
 }
 
+int dirs_profile_path(char *out, size_t size) {
+    char base[1024];
+#ifdef _WIN32
+    if (home(base, sizeof(base))) return -1;
+    return join(out, size, base, "komutracker\\auth\\profile.txt");
+#elif defined(__APPLE__)
+    if (home(base, sizeof(base))) return -1;
+    return join(out, size, base, "Library/Caches/komutracker/auth/profile.txt");
+#else
+    const char *xdg = getenv("XDG_CACHE_HOME");
+    if (xdg && *xdg) return join(out, size, xdg, "komutracker/auth/profile.txt");
+    if (home(base, sizeof(base))) return -1;
+    return join(out, size, base, ".cache/komutracker/auth/profile.txt");
+#endif
+}
+
 int dirs_create_parent(const char *path) {
     char copy[2048];
     size_t length = strlen(path);
