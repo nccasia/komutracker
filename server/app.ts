@@ -13,7 +13,7 @@ interface AuthService {
     poll(deviceId: string): Promise<string | null>;
     callback(query: URLSearchParams, redirectUri: string): Promise<UserProfile | null>;
     session(request: Request): Promise<SessionUser | null>;
-    logout(): void;
+    logout(userId: string): Promise<void>;
 }
 
 interface ActivityService {
@@ -97,8 +97,10 @@ export function createApp({ dataSource, config, auth: providedAuth, activity: pr
         response.json(token);
     }));
 
-    app.delete('/api/0/auth', asyncRoute(async (_request, response) => {
-        auth.logout();
+    app.delete('/api/0/auth', asyncRoute(async (request, response) => {
+        const session = await requireSession(auth, request, response);
+        if (!session) return;
+        await auth.logout(session.id);
         response.status(204).end();
     }));
 

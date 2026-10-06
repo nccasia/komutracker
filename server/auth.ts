@@ -154,7 +154,8 @@ export function createAuth(dataSource: DataSource, config: AppConfig) {
             return value;
         },
 
-        logout(): void {
+        async logout(userId: string): Promise<void> {
+            await users.update(userId, { authToken: null });
             cache.clear();
         },
     };
