@@ -35,7 +35,7 @@ double tracker_now_seconds(void);
 void tracker_sleep_seconds(double seconds);
 int tracker_session_init(tracker_session *session, http_client *client,
                          const char *email, const tracker_options *options);
-void tracker_session_poll(tracker_session *session);
+int tracker_session_poll(tracker_session *session);
 double tracker_session_delay(const tracker_session *session);
 void tracker_session_cleanup(tracker_session *session);
 

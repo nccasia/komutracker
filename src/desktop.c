@@ -110,7 +110,9 @@ static int run_tracking(desktop_app *app, http_client *client,
         .window_poll_seconds = app->config->window_poll_seconds,
     };
     tracker_session session;
-    if (tracker_session_init(&session, client, email, &options)) {
+    int initialization = tracker_session_init(&session, client, email, &options);
+    if (initialization == HTTP_RESULT_UNAUTHORIZED) return HTTP_RESULT_UNAUTHORIZED;
+    if (initialization != HTTP_RESULT_OK) {
         set_view(app, TRAY_CONNECTION_ERROR, true, name, "Idle detection unavailable");
         while (app->running && !is_logout_requested(app)) {
             if (take_flag(app, &app->dashboard_requested)) open_dashboard(app, "");
@@ -124,7 +126,10 @@ static int run_tracking(desktop_app *app, http_client *client,
     while (app->running && !is_logout_requested(app)) {
         if (take_flag(app, &app->dashboard_requested))
             open_dashboard(app, session.username);
-        tracker_session_poll(&session);
+        if (tracker_session_poll(&session) == HTTP_RESULT_UNAUTHORIZED) {
+            tracker_session_cleanup(&session);
+            return HTTP_RESULT_UNAUTHORIZED;
+        }
         tracker_sleep_seconds(0.1);
     }
 
@@ -159,6 +164,7 @@ static void desktop_worker(desktop_app *app) {
 
     char token[8192] = {0};
     bool has_token = auth_read_token(token, sizeof(token)) == 0;
+    bool session_replaced = false;
     char cached_name[512] = {0}, cached_email[512] = {0};
     auth_read_profile(cached_name, sizeof(cached_name), cached_email, sizeof(cached_email));
 
@@ -175,12 +181,14 @@ static void desktop_worker(desktop_app *app) {
 
     while (app->running) {
         if (!has_token) {
-            set_view(app, TRAY_LOGGED_OUT, false, NULL, "Tracking stopped");
+            set_view(app, TRAY_LOGGED_OUT, false, NULL,
+                     session_replaced ? "Session replaced by another login" : "Tracking stopped");
             while (app->running && !take_flag(app, &app->login_requested)) {
                 take_flag(app, &app->dashboard_requested);
                 tracker_sleep_seconds(0.1);
             }
             if (!app->running) break;
+            session_replaced = false;
 
             set_view(app, TRAY_AUTHENTICATING, false, NULL, "Waiting for browser authentication");
             app->login_running = 1;
@@ -208,6 +216,7 @@ static void desktop_worker(desktop_app *app) {
             memset(token, 0, sizeof(token));
             client.token = NULL;
             has_token = false;
+            session_replaced = true;
             cached_name[0] = cached_email[0] = '\0';
             continue;
         }
@@ -230,7 +239,20 @@ static void desktop_worker(desktop_app *app) {
         snprintf(cached_name, sizeof(cached_name), "%s", name);
         snprintf(cached_email, sizeof(cached_email), "%s", email);
         auth_save_profile(name, email);
-        run_tracking(app, &client, name, email);
+        int tracking_result = run_tracking(app, &client, name, email);
+
+        if (tracking_result == HTTP_RESULT_UNAUTHORIZED) {
+            auth_remove_token();
+            auth_remove_profile();
+            memset(token, 0, sizeof(token));
+            client.token = NULL;
+            has_token = false;
+            session_replaced = true;
+            cached_name[0] = cached_email[0] = '\0';
+            set_view(app, TRAY_LOGGED_OUT, false, NULL,
+                     "Session replaced by another login");
+            continue;
+        }
 
         if (app->running && is_logout_requested(app)) {
             logout(app, &client);

@@ -17,6 +17,12 @@ typedef struct {
 } http_client;
 
 enum {
+    HTTP_RESULT_UNAUTHORIZED = -2,
+    HTTP_RESULT_ERROR = -1,
+    HTTP_RESULT_OK = 0
+};
+
+enum {
     HTTP_AUTH_ERROR = -1,
     HTTP_AUTH_PENDING = 0,
     HTTP_AUTH_OK = 1,

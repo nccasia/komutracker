@@ -45,9 +45,10 @@ static int get_hostname(char *buffer, size_t size) {
 #endif
 }
 
-static void report_send(tracker_session *session, const char *event, int result) {
+static int report_send(tracker_session *session, const char *event, int result) {
     if (session->options.on_send)
         session->options.on_send(session->options.callback_context, event, result);
+    return result;
 }
 
 int tracker_session_init(tracker_session *session, http_client *client,
@@ -76,14 +77,24 @@ int tracker_session_init(tracker_session *session, http_client *client,
 
     /* Window tracking remains disabled until its API is implemented. */
     session->window_available = false;
-    if (http_create_bucket(client, session->afk_bucket,
-                           "aw-watcher-afk", "afkstatus", session->hostname)) {
-        report_send(session, "create AFK bucket", -1);
+    int result = http_create_bucket(client, session->afk_bucket,
+                                    "aw-watcher-afk", "afkstatus", session->hostname);
+    if (result) {
+        report_send(session, "create AFK bucket", result);
+        if (result == HTTP_RESULT_UNAUTHORIZED) {
+            tracker_session_cleanup(session);
+            return result;
+        }
     }
     if (session->window_available &&
-        http_create_bucket(client, session->window_bucket,
-                           "aw-watcher-window", "currentwindow", session->hostname)) {
-        report_send(session, "create foreground-process bucket", -1);
+        (result = http_create_bucket(client, session->window_bucket,
+                                     "aw-watcher-window", "currentwindow",
+                                     session->hostname)) != HTTP_RESULT_OK) {
+        report_send(session, "create foreground-process bucket", result);
+        if (result == HTTP_RESULT_UNAUTHORIZED) {
+            tracker_session_cleanup(session);
+            return result;
+        }
     }
 
     session->next_afk = tracker_now_seconds();
@@ -91,7 +102,7 @@ int tracker_session_init(tracker_session *session, http_client *client,
     return 0;
 }
 
-void tracker_session_poll(tracker_session *session) {
+int tracker_session_poll(tracker_session *session) {
     double now = tracker_now_seconds();
 
     if (session->window_available && now >= session->next_window) {
@@ -106,7 +117,8 @@ void tracker_session_poll(tracker_session *session) {
             int result = http_heartbeat_window(
                 session->client, session->window_bucket, timestamp,
                 foreground.app, foreground.title, session->options.window_poll_seconds + 1.0);
-            report_send(session, "foreground-process heartbeat", result);
+            if (report_send(session, "foreground-process heartbeat", result)
+                == HTTP_RESULT_UNAUTHORIZED) return HTTP_RESULT_UNAUTHORIZED;
         }
         session->next_window = now + session->options.window_poll_seconds;
     }
@@ -122,24 +134,28 @@ void tracker_session_poll(tracker_session *session) {
             char timestamp[32];
             if (sample.changed) {
                 if (!afk_format_timestamp(timestamp, sizeof(timestamp), last_input)) {
-                    report_send(session, "afk heartbeat", http_heartbeat(
+                    int result = report_send(session, "afk heartbeat", http_heartbeat(
                         session->client, session->afk_bucket, timestamp, 0,
                         session->afk, pulse_time));
+                    if (result == HTTP_RESULT_UNAUTHORIZED) return result;
                 }
                 if (!afk_format_timestamp(timestamp, sizeof(timestamp), last_input + 0.001)) {
-                    report_send(session, "afk heartbeat", http_heartbeat(
+                    int result = report_send(session, "afk heartbeat", http_heartbeat(
                         session->client, session->afk_bucket, timestamp, sample.duration,
                         sample.afk, pulse_time));
+                    if (result == HTTP_RESULT_UNAUTHORIZED) return result;
                 }
             } else if (!afk_format_timestamp(timestamp, sizeof(timestamp), last_input)) {
-                report_send(session, "afk heartbeat", http_heartbeat(
+                int result = report_send(session, "afk heartbeat", http_heartbeat(
                     session->client, session->afk_bucket, timestamp, sample.duration,
                     sample.afk, pulse_time));
+                if (result == HTTP_RESULT_UNAUTHORIZED) return result;
             }
             session->afk = sample.afk;
         }
         session->next_afk = now + session->options.afk_poll_seconds;
     }
+    return HTTP_RESULT_OK;
 }
 
 double tracker_session_delay(const tracker_session *session) {

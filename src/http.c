@@ -71,10 +71,12 @@ void http_global_cleanup(void) { curl_global_cleanup(); }
 void http_set_running_flag(volatile sig_atomic_t *running) { running_flag = running; }
 
 static int post_ok(const http_client *client, const char *url, const char *body) {
-    long status;
+    long status = 0;
     char response[1024];
-    return request(client, url, "POST", body, response, sizeof(response), &status) == 0 &&
-           status >= 200 && status < 300 ? 0 : -1;
+    if (request(client, url, "POST", body, response, sizeof(response), &status))
+        return HTTP_RESULT_ERROR;
+    if (status == 401 || status == 403) return HTTP_RESULT_UNAUTHORIZED;
+    return status >= 200 && status < 300 ? HTTP_RESULT_OK : HTTP_RESULT_ERROR;
 }
 
 int http_create_bucket(const http_client *client, const char *bucket, const char *client_name,
@@ -88,16 +90,17 @@ int http_create_bucket(const http_client *client, const char *bucket, const char
     snprintf(body, sizeof(body), "{\"type\":\"%s\",\"client\":\"%s\",\"hostname\":\"%s\"}",
              event_type, client_name, hostname);
     curl_free(escaped); curl_easy_cleanup(curl);
-    long status;
+    long status = 0;
     char response[1024];
     int result = request(client, url, "POST", body, response, sizeof(response), &status);
     if (result || ((status < 200 || status >= 300) && status != 409)) {
         if (client->verbose)
             fprintf(stderr, "Bucket creation failed: HTTP %ld%s%s\n", status,
                     response[0] ? ": " : "", response);
-        return -1;
+        return status == 401 || status == 403
+            ? HTTP_RESULT_UNAUTHORIZED : HTTP_RESULT_ERROR;
     }
-    return 0;
+    return HTTP_RESULT_OK;
 }
 
 int http_json_escape(const char *source, char *out, size_t size) {
@@ -160,16 +163,17 @@ int http_heartbeat(const http_client *client, const char *bucket, const char *ti
     curl_free(escaped); curl_easy_cleanup(curl);
 
     char response[1024];
-    long status;
+    long status = 0;
     int result = request(client, url, "POST", body, response, sizeof(response), &status);
     if (result || status < 200 || status >= 300) {
         if (client->verbose) {
             fprintf(stderr, "Heartbeat request failed: HTTP %ld%s%s\n", status,
                     response[0] ? ": " : "", response);
         }
-        return -1;
+        return status == 401 || status == 403
+            ? HTTP_RESULT_UNAUTHORIZED : HTTP_RESULT_ERROR;
     }
-    return 0;
+    return HTTP_RESULT_OK;
 }
 
 int http_parse_json_string(const char *json, char *out, size_t size) {
