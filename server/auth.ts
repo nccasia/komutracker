@@ -126,7 +126,9 @@ export function createAuth(dataSource: DataSource, config: AppConfig) {
             const profile = await fetchProfile(config, tokens);
 
             await dataSource.transaction(async (manager) => {
-                const existing = await manager.findOne(UserEntity, { where: { email: profile.email } });
+                // Mezon ID is the stable account identity. Email can change and
+                // must not allow the same account to retain multiple sessions.
+                const existing = await manager.findOne(UserEntity, { where: { mezonId: profile.mezonId } });
                 const target = existing || user;
                 if (existing && existing.id !== user.id) await manager.delete(UserEntity, user.id);
                 await manager.update(UserEntity, target.id, {

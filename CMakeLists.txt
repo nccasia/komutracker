@@ -48,9 +48,12 @@ if(BUILD_TESTING)
     target_include_directories(afk-state-tests PRIVATE src)
     add_test(NAME afk-state-tests COMMAND afk-state-tests)
 
-    add_executable(auth-tests tests/test_auth.c src/http.c)
+    add_executable(auth-tests tests/test_auth.c src/http.c src/auth.c src/dirs.c)
     target_include_directories(auth-tests PRIVATE src)
     target_link_libraries(auth-tests PRIVATE CURL::libcurl)
+    if(WIN32)
+        target_link_libraries(auth-tests PRIVATE bcrypt shell32)
+    endif()
     add_test(NAME auth-tests COMMAND auth-tests)
 
     add_executable(window-tests tests/test_window.c src/http.c)

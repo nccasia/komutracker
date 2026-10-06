@@ -15,6 +15,7 @@ typedef struct {
 } auth_options;
 
 int auth_get_device_id(char *out, size_t size);
+int auth_generate_device_id(char *out, size_t size);
 int auth_read_token(char *out, size_t size);
 int auth_save_token(const char *token);
 int auth_remove_token(void);

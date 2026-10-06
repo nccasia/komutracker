@@ -64,15 +64,27 @@ static int random_bytes(unsigned char *out, size_t size) {
 #endif
 }
 
+int auth_generate_device_id(char *out, size_t size) {
+    if (size < 65) return -1;
+    unsigned char random[32];
+    if (random_bytes(random, sizeof(random))) return -1;
+    for (size_t i = 0; i < sizeof(random); i++) sprintf(out + i * 2, "%02x", random[i]);
+    out[64] = '\0';
+    return 0;
+}
+
+static int save_device_id(const char *device_id) {
+    char path[2048];
+    if (dirs_device_path(path, sizeof(path))) return -1;
+    return write_private(path, device_id);
+}
+
 int auth_get_device_id(char *out, size_t size) {
     if (size < 65) return -1;
     char path[2048];
     if (dirs_device_path(path, sizeof(path))) return -1;
     if (!read_file(path, out, size) && strlen(out) == 64) return 0;
-    unsigned char random[32];
-    if (random_bytes(random, sizeof(random))) return -1;
-    for (size_t i = 0; i < sizeof(random); i++) sprintf(out + i * 2, "%02x", random[i]);
-    out[64] = '\0';
+    if (auth_generate_device_id(out, size)) return -1;
     return write_private(path, out);
 }
 
@@ -151,7 +163,7 @@ int auth_login(http_client *client, const auth_options *options, char *token, si
             if (client->verbose)
                 fprintf(stderr, "komutracker %s: authentication poll attempt %d succeeded\n",
                         KOMUTRACKER_VERSION, attempt);
-            if (auth_save_token(token)) return -1;
+            if (save_device_id(client->device_id) || auth_save_token(token)) return -1;
             client->token = token;
             return http_auth_me(client, NULL, 0, NULL, 0) == HTTP_AUTH_OK ? 0 : -1;
         }

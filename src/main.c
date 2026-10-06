@@ -142,6 +142,14 @@ int main(int argc, char **argv) {
 
     int verification = token ? http_auth_me(&client, NULL, 0, NULL, 0) : HTTP_AUTH_UNAUTHORIZED;
     if (login || verification == HTTP_AUTH_UNAUTHORIZED) {
+        /* A device ID identifies one concrete login session. Reusing it lets
+           the auth poll return a token from an older session before the new
+           OAuth callback has completed. Rotate it for every login attempt. */
+        if (auth_generate_device_id(device, sizeof(device))) {
+            fprintf(stderr, "Unable to create a new login session\n");
+            http_global_cleanup(); return 1;
+        }
+        client.device_id = device;
         if (!token_arg) auth_remove_token();
         if (auth_login(&client, &options, saved_token, sizeof(saved_token), &running)) {
             http_global_cleanup(); return running ? 1 : 130;

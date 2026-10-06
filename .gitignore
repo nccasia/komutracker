@@ -1,5 +1,5 @@
 build
-build-macos-universal
+build-desktop
 dist
 dist-universal
 docs

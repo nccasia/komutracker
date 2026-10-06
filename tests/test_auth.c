@@ -1,4 +1,4 @@
-#include "http.h"
+#include "auth.h"
 #include <assert.h>
 #include <string.h>
 
@@ -13,5 +13,12 @@ int main(void) {
                               name, sizeof(name), email, sizeof(email)) == 0);
     assert(strcmp(name, "Test User") == 0);
     assert(strcmp(email, "test@example.com") == 0);
+
+    char first_device[65], second_device[65];
+    assert(auth_generate_device_id(first_device, sizeof(first_device)) == 0);
+    assert(auth_generate_device_id(second_device, sizeof(second_device)) == 0);
+    assert(strlen(first_device) == 64);
+    assert(strlen(second_device) == 64);
+    assert(strcmp(first_device, second_device) != 0);
     return 0;
 }
