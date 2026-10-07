@@ -113,6 +113,7 @@ Generated artifacts are:
 - Windows: a ZIP containing the standalone GUI and CLI executables.
 - macOS: a DMG containing `KomuTracker.app`.
 - Ubuntu: a DEB that installs the executable, AppIndicator launcher, desktop entry, and icons.
+- Arch Linux: a native `.pkg.tar.zst` package built via `cd packaging/arch && makepkg -s`.
 
 Public macOS and Windows releases should be code-signed. The generated local DMG and
 ZIP are otherwise complete but operating-system security prompts may identify them as
@@ -122,6 +123,13 @@ On Ubuntu, install and launch the package with:
 
 ```bash
 sudo apt install ./dist/komutracker-*-ubuntu-amd64.deb
+komutracker-desktop
+```
+
+On Arch Linux, install and launch the package with:
+
+```bash
+sudo pacman -U ./dist/komutracker-*-x86_64.pkg.tar.zst
 komutracker-desktop
 ```
 

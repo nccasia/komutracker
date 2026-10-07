@@ -2,6 +2,9 @@ build
 build-desktop
 dist
 dist-universal
+*.pkg.tar.zst
+packaging/arch/src
+packaging/arch/pkg
 docs
 other
 old
