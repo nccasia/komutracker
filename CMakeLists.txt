@@ -28,7 +28,17 @@ else()
     if(NOT X11_Xss_FOUND)
         message(FATAL_ERROR "XScreenSaver development files are required (libxss-dev)")
     endif()
-    set(KOMUTRACKER_PLATFORM_SOURCES src/idle_linux.c src/window_linux.c)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(WAYLAND_CLIENT QUIET IMPORTED_TARGET wayland-client)
+    if(WAYLAND_CLIENT_FOUND)
+        set(KOMUTRACKER_PLATFORM_SOURCES
+            src/idle_linux.c
+            src/window_linux.c
+            src/ext_idle_notify_v1_protocol.c
+        )
+    else()
+        set(KOMUTRACKER_PLATFORM_SOURCES src/idle_linux.c src/window_linux.c)
+    endif()
 endif()
 
 function(configure_komutracker_target target)
@@ -44,6 +54,10 @@ function(configure_komutracker_target target)
     else()
         target_include_directories(${target} PRIVATE ${X11_INCLUDE_DIR})
         target_link_libraries(${target} PRIVATE ${X11_LIBRARIES} ${X11_Xss_LIB})
+        if(WAYLAND_CLIENT_FOUND)
+            target_link_libraries(${target} PRIVATE PkgConfig::WAYLAND_CLIENT)
+            target_compile_definitions(${target} PRIVATE KOMUTRACKER_HAVE_WAYLAND=1)
+        endif()
     endif()
 endfunction()
 
