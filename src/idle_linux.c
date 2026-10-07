@@ -8,6 +8,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <poll.h>
+#include <pthread.h>
 
 #include <X11/Xlib.h>
 #include <X11/extensions/scrnsaver.h>
@@ -20,9 +21,15 @@ static struct wl_display *wl_disp = NULL;
 static struct ext_idle_notifier_v1 *wl_notifier = NULL;
 static struct ext_idle_notification_v1 *wl_notification = NULL;
 static struct wl_seat *wl_seat_obj = NULL;
+static uint32_t wl_notifier_version = 1;
+
 static bool wl_is_idle = false;
 static double wl_last_input = 0.0;
 static bool using_wayland = false;
+
+static pthread_t wl_thread;
+static volatile bool wl_thread_running = false;
+static pthread_mutex_t wl_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static double get_monotonic_now(void) {
     struct timespec ts;
@@ -32,14 +39,18 @@ static double get_monotonic_now(void) {
 
 static void wl_handle_idled(void *data, struct ext_idle_notification_v1 *n) {
     (void)data; (void)n;
+    pthread_mutex_lock(&wl_mutex);
     wl_is_idle = true;
     wl_last_input = get_monotonic_now() - 1.0;
+    pthread_mutex_unlock(&wl_mutex);
 }
 
 static void wl_handle_resumed(void *data, struct ext_idle_notification_v1 *n) {
     (void)data; (void)n;
+    pthread_mutex_lock(&wl_mutex);
     wl_is_idle = false;
     wl_last_input = get_monotonic_now();
+    pthread_mutex_unlock(&wl_mutex);
 }
 
 static const struct ext_idle_notification_v1_listener wl_listener = {
@@ -49,9 +60,10 @@ static const struct ext_idle_notification_v1_listener wl_listener = {
 
 static void wl_registry_global(void *data, struct wl_registry *registry,
                                uint32_t name, const char *interface, uint32_t version) {
-    (void)data; (void)version;
+    (void)data;
     if (strcmp(interface, ext_idle_notifier_v1_interface.name) == 0) {
-        wl_notifier = wl_registry_bind(registry, name, &ext_idle_notifier_v1_interface, 1);
+        wl_notifier_version = version >= 2 ? 2 : 1;
+        wl_notifier = wl_registry_bind(registry, name, &ext_idle_notifier_v1_interface, wl_notifier_version);
     } else if (strcmp(interface, "wl_seat") == 0) {
         wl_seat_obj = wl_registry_bind(registry, name, &wl_seat_interface, 1);
     }
@@ -65,6 +77,27 @@ static const struct wl_registry_listener wl_reg_listener = {
     .global = wl_registry_global,
     .global_remove = wl_registry_global_remove,
 };
+
+static void *wayland_idle_thread(void *arg) {
+    (void)arg;
+    int fd = wl_display_get_fd(wl_disp);
+    while (wl_thread_running) {
+        while (wl_display_prepare_read(wl_disp) != 0) {
+            wl_display_dispatch_pending(wl_disp);
+        }
+        wl_display_flush(wl_disp);
+
+        struct pollfd pfd = { .fd = fd, .events = POLLIN };
+        int ret = poll(&pfd, 1, 250);
+        if (ret > 0) {
+            wl_display_read_events(wl_disp);
+            wl_display_dispatch_pending(wl_disp);
+        } else {
+            wl_display_cancel_read(wl_disp);
+        }
+    }
+    return NULL;
+}
 
 static int init_wayland_idle(void) {
     wl_disp = wl_display_connect(NULL);
@@ -90,7 +123,17 @@ static int init_wayland_idle(void) {
 
     wl_last_input = get_monotonic_now();
     wl_is_idle = false;
-    wl_notification = ext_idle_notifier_v1_get_idle_notification(wl_notifier, 1000, wl_seat_obj);
+
+    /* If version >= 2, use get_input_idle_notification to ignore inhibitors
+       (video playback, browsers, etc.) and accurately monitor user hardware input. */
+    if (wl_notifier_version >= 2) {
+        wl_notification = ext_idle_notifier_v1_get_input_idle_notification(
+            wl_notifier, 1000, wl_seat_obj);
+    } else {
+        wl_notification = ext_idle_notifier_v1_get_idle_notification(
+            wl_notifier, 1000, wl_seat_obj);
+    }
+
     if (!wl_notification) {
         ext_idle_notifier_v1_destroy(wl_notifier);
         wl_notifier = NULL;
@@ -102,37 +145,40 @@ static int init_wayland_idle(void) {
 
     ext_idle_notification_v1_add_listener(wl_notification, &wl_listener, NULL);
     wl_display_roundtrip(wl_disp);
+
+    wl_thread_running = true;
+    if (pthread_create(&wl_thread, NULL, wayland_idle_thread, NULL) != 0) {
+        wl_thread_running = false;
+        ext_idle_notification_v1_destroy(wl_notification);
+        wl_notification = NULL;
+        ext_idle_notifier_v1_destroy(wl_notifier);
+        wl_notifier = NULL;
+        if (wl_seat_obj) { wl_seat_destroy(wl_seat_obj); wl_seat_obj = NULL; }
+        wl_display_disconnect(wl_disp);
+        wl_disp = NULL;
+        return -1;
+    }
+
     using_wayland = true;
     return 0;
 }
 
-static void poll_wayland_events(void) {
-    if (!wl_disp) return;
-    while (wl_display_prepare_read(wl_disp) != 0) {
-        wl_display_dispatch_pending(wl_disp);
-    }
-    wl_display_flush(wl_disp);
-    struct pollfd pfd = { .fd = wl_display_get_fd(wl_disp), .events = POLLIN };
-    if (poll(&pfd, 1, 0) > 0) {
-        wl_display_read_events(wl_disp);
-        wl_display_dispatch_pending(wl_disp);
-    } else {
-        wl_display_cancel_read(wl_disp);
-    }
-}
-
 static double get_wayland_idle_seconds(void) {
-    poll_wayland_events();
+    pthread_mutex_lock(&wl_mutex);
     double now = get_monotonic_now();
-    if (wl_is_idle) {
-        return now - wl_last_input;
-    } else {
-        double elapsed = now - wl_last_input;
-        return elapsed < 1.0 ? elapsed : 0.0;
+    double idle = now - wl_last_input;
+    if (!wl_is_idle && idle > 1.0) {
+        idle = 0.0;
     }
+    pthread_mutex_unlock(&wl_mutex);
+    return idle < 0.0 ? 0.0 : idle;
 }
 
 static void cleanup_wayland(void) {
+    if (wl_thread_running) {
+        wl_thread_running = false;
+        pthread_join(wl_thread, NULL);
+    }
     if (wl_notification) { ext_idle_notification_v1_destroy(wl_notification); wl_notification = NULL; }
     if (wl_notifier) { ext_idle_notifier_v1_destroy(wl_notifier); wl_notifier = NULL; }
     if (wl_seat_obj) { wl_seat_destroy(wl_seat_obj); wl_seat_obj = NULL; }
