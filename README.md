@@ -35,7 +35,7 @@ sudo dnf install gcc make cmake pkgconf-pkg-config libcurl-devel libX11-devel li
 ### Arch Linux
 
 ```bash
-sudo pacman -S --needed base-devel cmake pkgconf curl libx11 libxss gtk3 libappindicator-gtk3
+sudo pacman -S --needed base-devel cmake pkgconf curl libx11 libxss gtk3 libayatana-appindicator
 ```
 
 ### macOS
@@ -78,7 +78,6 @@ The Linux implementation currently requires an X11 display. A Wayland session wi
 ## Build
 
 ```bash
-cd /mnt/nccasia/komutracker
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ```
@@ -93,10 +92,13 @@ The build produces both the CLI and desktop application:
 
 - macOS: `build/KomuTracker.app` and `build/komutracker`.
 - Windows: `build/KomuTracker.exe` and `build/komutracker-cli.exe`.
-- Ubuntu: `build/komutracker-desktop` and `build/komutracker`.
+- Linux (Arch/Ubuntu): `build/komutracker-desktop` and `build/komutracker`.
 
 The desktop application only shows a tray/menu-bar icon. Use its menu to log in,
 log out, open the dashboard, inspect connection/tracking status, or quit.
+On Linux desktop environments (such as GNOME, KDE Plasma, Hyprland, Sway), the tray icon
+is automatically resolved from system icon paths, user icon directories (`~/.local/share/pixmaps/`),
+relative executable paths, or extracted from embedded assets on first run.
 
 ## Package a release
 

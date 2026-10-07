@@ -36,10 +36,17 @@ sudo apt remove komutracker
 
 The standalone CLI file is named `komutracker`. It is dynamically linked and requires these runtime libraries:
 
+On Ubuntu/Debian:
 ```bash
 sudo apt update
 sudo apt install libcurl4 libx11-6 libxss1
 ```
+
+On Arch Linux:
+```bash
+sudo pacman -S --needed curl libx11 libxss
+```
+
 
 Install the binary system-wide:
 
