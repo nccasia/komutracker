@@ -12,6 +12,7 @@ depends=(
     'libayatana-appindicator'
     'libx11'
     'libxss'
+    'wayland'
 )
 makedepends=(
     'cmake'
