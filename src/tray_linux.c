@@ -87,12 +87,15 @@ int tray_init(const tray_callbacks *provided_callbacks) {
 
 void tray_update(const tray_view *view) {
     gtk_menu_item_set_label(GTK_MENU_ITEM(account_item), view->account_name);
+    gtk_widget_set_sensitive(account_item, FALSE);
     gtk_menu_item_set_label(GTK_MENU_ITEM(status_item), view->status_text);
+    gtk_widget_set_sensitive(status_item, FALSE);
     gtk_widget_set_sensitive(dashboard_item, view->logged_in);
 
     if (view->logged_in && view->today_time[0]) {
         gtk_menu_item_set_label(GTK_MENU_ITEM(today_item), view->today_time);
         gtk_widget_show(today_item);
+        gtk_widget_set_sensitive(today_item, FALSE);
 
         const char *label_text = view->today_time;
         if (strncmp(label_text, "Today: ", 7) == 0) label_text += 7;
@@ -104,6 +107,7 @@ void tray_update(const tray_view *view) {
         app_indicator_set_title(indicator, title);
     } else {
         gtk_widget_hide(today_item);
+        gtk_widget_set_sensitive(today_item, FALSE);
         app_indicator_set_label(indicator, "", "");
         app_indicator_set_title(indicator, "KomuTracker");
     }

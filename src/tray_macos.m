@@ -110,11 +110,14 @@ int tray_init(const tray_callbacks *provided_callbacks) {
 
 void tray_update(const tray_view *view) {
     account_item.title = [NSString stringWithUTF8String:view->account_name];
+    account_item.enabled = NO;
     state_item.title = [NSString stringWithUTF8String:view->status_text];
+    state_item.enabled = NO;
     dashboard_item.enabled = view->logged_in;
 
     if (view->logged_in && view->today_time[0]) {
         today_item.title = [NSString stringWithUTF8String:view->today_time];
+        today_item.enabled = NO;
         today_item.hidden = NO;
         const char *label_text = view->today_time;
         if (strncmp(label_text, "Today: ", 7) == 0) label_text += 7;

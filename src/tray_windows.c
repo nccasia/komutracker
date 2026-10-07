@@ -48,12 +48,12 @@ static void show_menu(void) {
     wchar_t account[512], status[256], today[128];
     utf8_to_wide(current_view.account_name, account, ARRAYSIZE(account));
     utf8_to_wide(current_view.status_text, status, ARRAYSIZE(status));
-    AppendMenuW(menu, MF_STRING | MF_DISABLED, 0, account);
+    AppendMenuW(menu, MF_STRING | MF_DISABLED | MF_GRAYED, 0, account);
     if (current_view.logged_in && current_view.today_time[0]) {
         utf8_to_wide(current_view.today_time, today, ARRAYSIZE(today));
-        AppendMenuW(menu, MF_STRING | MF_DISABLED, 0, today);
+        AppendMenuW(menu, MF_STRING | MF_DISABLED | MF_GRAYED, 0, today);
     }
-    AppendMenuW(menu, MF_STRING | MF_DISABLED, 0, status);
+    AppendMenuW(menu, MF_STRING | MF_DISABLED | MF_GRAYED, 0, status);
     AppendMenuW(menu, MF_SEPARATOR, 0, NULL);
     AppendMenuW(menu, MF_STRING | (current_view.logged_in ? 0 : MF_GRAYED),
                 MENU_DASHBOARD, L"Open Dashboard");
