@@ -160,6 +160,12 @@ int auth_open_browser(const char *url) {
     pid_t child = fork();
     if (child < 0) return -1;
     if (child == 0) {
+        int devnull = open("/dev/null", O_WRONLY);
+        if (devnull >= 0) {
+            dup2(devnull, STDOUT_FILENO);
+            dup2(devnull, STDERR_FILENO);
+            close(devnull);
+        }
 #ifdef __APPLE__
         execlp("open", "open", url, (char *)NULL);
 #else
