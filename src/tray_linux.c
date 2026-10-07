@@ -139,9 +139,29 @@ static GtkWidget *new_item(const char *label, GCallback callback) {
     return item;
 }
 
+#ifdef KOMUTRACKER_USE_AYATANA
+static void silence_ayatana_deprecation(const gchar *log_domain, GLogLevelFlags log_level,
+                                        const gchar *message, gpointer user_data) {
+    (void)user_data;
+    if (message && strstr(message, "libayatana-appindicator is deprecated")) {
+        return;
+    }
+    g_log_default_handler(log_domain, log_level, message, user_data);
+}
+#endif
+
 int tray_init(const tray_callbacks *provided_callbacks) {
     callbacks = *provided_callbacks;
     if (!gtk_init_check(NULL, NULL)) return -1;
+
+#ifdef KOMUTRACKER_USE_AYATANA
+    static int log_handler_installed = 0;
+    if (!log_handler_installed) {
+        g_log_set_handler("libayatana-appindicator", G_LOG_LEVEL_WARNING,
+                          silence_ayatana_deprecation, NULL);
+        log_handler_installed = 1;
+    }
+#endif
 
     char icon_path[PATH_MAX];
     resolve_tray_icon_path(icon_path, sizeof(icon_path));
@@ -150,9 +170,12 @@ int tray_init(const tray_callbacks *provided_callbacks) {
     strncpy(icon_dir_buf, icon_path, sizeof(icon_dir_buf));
     char *icon_dir = dirname(icon_dir_buf);
 
-    indicator = app_indicator_new_with_path("komutracker", icon_path,
-                                            APP_INDICATOR_CATEGORY_APPLICATION_STATUS,
-                                            icon_dir);
+    indicator = g_object_new(APP_INDICATOR_TYPE,
+                             "id", "komutracker",
+                             "category", "ApplicationStatus",
+                             "icon-name", icon_path,
+                             "icon-theme-path", icon_dir,
+                             NULL);
     if (!indicator) return -1;
     app_indicator_set_icon_theme_path(indicator, icon_dir);
     app_indicator_set_icon_full(indicator, icon_path, "KomuTracker");
