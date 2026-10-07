@@ -9,6 +9,16 @@
 #include <libappindicator/app-indicator.h>
 #endif
 
+#include "dirs.h"
+#include "tray_icon_data.h"
+
+#include <libgen.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #ifndef KOMUTRACKER_TRAY_ICON_PATH
 #define KOMUTRACKER_TRAY_ICON_PATH "/usr/share/pixmaps/komutracker-tray.png"
 #endif
@@ -21,6 +31,81 @@ static GtkWidget *status_item;
 static GtkWidget *dashboard_item;
 static GtkWidget *auth_item;
 static GtkWidget *logout_item;
+
+static int check_icon_candidate(const char *path, char *out, size_t size) {
+    if (!path || !*path) return 0;
+    if (access(path, R_OK) == 0) {
+        if (realpath(path, out)) return 1;
+        snprintf(out, size, "%s", path);
+        return 1;
+    }
+    return 0;
+}
+
+static void resolve_tray_icon_path(char *out, size_t size) {
+    // 1. Check configured/installed system path
+    if (check_icon_candidate(KOMUTRACKER_TRAY_ICON_PATH, out, size)) return;
+
+    // 2. Check XDG data directory (~/.local/share/pixmaps/komutracker-tray.png)
+    const char *xdg = getenv("XDG_DATA_HOME");
+    const char *home = getenv("HOME");
+    char candidate[PATH_MAX];
+    if (xdg && *xdg) {
+        snprintf(candidate, sizeof(candidate), "%s/pixmaps/komutracker-tray.png", xdg);
+        if (check_icon_candidate(candidate, out, size)) return;
+    }
+    if (home && *home) {
+        snprintf(candidate, sizeof(candidate), "%s/.local/share/pixmaps/komutracker-tray.png", home);
+        if (check_icon_candidate(candidate, out, size)) return;
+    }
+
+    // 3. Check relative to current executable (/proc/self/exe)
+    char exe[PATH_MAX];
+    ssize_t len = readlink("/proc/self/exe", exe, sizeof(exe) - 1);
+    if (len > 0) {
+        exe[len] = '\0';
+        char exe_copy[PATH_MAX];
+        strncpy(exe_copy, exe, sizeof(exe_copy));
+        char *dir = dirname(exe_copy);
+        if (dir) {
+            snprintf(candidate, sizeof(candidate), "%s/../packaging/media/logo_tray.png", dir);
+            if (check_icon_candidate(candidate, out, size)) return;
+
+            snprintf(candidate, sizeof(candidate), "%s/../share/pixmaps/komutracker-tray.png", dir);
+            if (check_icon_candidate(candidate, out, size)) return;
+
+            snprintf(candidate, sizeof(candidate), "%s/packaging/media/logo_tray.png", dir);
+            if (check_icon_candidate(candidate, out, size)) return;
+
+            snprintf(candidate, sizeof(candidate), "%s/logo_tray.png", dir);
+            if (check_icon_candidate(candidate, out, size)) return;
+        }
+    }
+
+    // 4. Check relative to current working directory
+    if (check_icon_candidate("packaging/media/logo_tray.png", out, size)) return;
+    if (check_icon_candidate("public/logo.png", out, size)) return;
+
+    // 5. Fallback: write embedded icon to user's local pixmaps directory
+    char fallback_path[PATH_MAX];
+    fallback_path[0] = '\0';
+    if (xdg && *xdg) {
+        snprintf(fallback_path, sizeof(fallback_path), "%s/pixmaps/komutracker-tray.png", xdg);
+    } else if (home && *home) {
+        snprintf(fallback_path, sizeof(fallback_path), "%s/.local/share/pixmaps/komutracker-tray.png", home);
+    }
+    if (fallback_path[0] && dirs_create_parent(fallback_path) == 0) {
+        FILE *f = fopen(fallback_path, "wb");
+        if (f) {
+            fwrite(komutracker_tray_icon_png, 1, komutracker_tray_icon_png_len, f);
+            fclose(f);
+            if (check_icon_candidate(fallback_path, out, size)) return;
+        }
+    }
+
+    // Ultimate fallback
+    snprintf(out, size, "%s", KOMUTRACKER_TRAY_ICON_PATH);
+}
 
 static void auth_action(GtkMenuItem *item, gpointer context) {
     (void)item;
@@ -57,10 +142,19 @@ int tray_init(const tray_callbacks *provided_callbacks) {
     callbacks = *provided_callbacks;
     if (!gtk_init_check(NULL, NULL)) return -1;
 
-    indicator = app_indicator_new("komutracker", "komutracker-tray",
-                                  APP_INDICATOR_CATEGORY_APPLICATION_STATUS);
+    char icon_path[PATH_MAX];
+    resolve_tray_icon_path(icon_path, sizeof(icon_path));
+
+    char icon_dir_buf[PATH_MAX];
+    strncpy(icon_dir_buf, icon_path, sizeof(icon_dir_buf));
+    char *icon_dir = dirname(icon_dir_buf);
+
+    indicator = app_indicator_new_with_path("komutracker", icon_path,
+                                            APP_INDICATOR_CATEGORY_APPLICATION_STATUS,
+                                            icon_dir);
     if (!indicator) return -1;
-    app_indicator_set_icon_full(indicator, KOMUTRACKER_TRAY_ICON_PATH, "KomuTracker");
+    app_indicator_set_icon_theme_path(indicator, icon_dir);
+    app_indicator_set_icon_full(indicator, icon_path, "KomuTracker");
     app_indicator_set_status(indicator, APP_INDICATOR_STATUS_ACTIVE);
 
     menu = gtk_menu_new();

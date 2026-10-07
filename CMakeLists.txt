@@ -124,7 +124,7 @@ else()
     configure_komutracker_target(komutracker_desktop)
     target_compile_definitions(komutracker_desktop PRIVATE
         ${APPINDICATOR_DEFINITION}
-        KOMUTRACKER_TRAY_ICON_PATH="/usr/share/pixmaps/komutracker-tray.png"
+        KOMUTRACKER_TRAY_ICON_PATH="${CMAKE_INSTALL_FULL_DATADIR}/pixmaps/komutracker-tray.png"
     )
     target_link_libraries(komutracker_desktop PRIVATE PkgConfig::GTK3 ${APPINDICATOR_TARGET})
     set_target_properties(komutracker_desktop PROPERTIES OUTPUT_NAME "komutracker-desktop")
