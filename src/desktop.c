@@ -77,7 +77,28 @@ static void set_view(desktop_app *app, tray_status status, bool logged_in,
              name && *name ? name : (logged_in ? "Signed In" : "Not Logged In"));
     snprintf(app->view.status_text, sizeof(app->view.status_text), "%s",
              status_text ? status_text : "");
+    if (!logged_in) {
+        app->view.today_time[0] = '\0';
+    }
     mutex_unlock(&app->mutex);
+}
+
+static void set_today_time(desktop_app *app, const char *today_time) {
+    mutex_lock(&app->mutex);
+    snprintf(app->view.today_time, sizeof(app->view.today_time), "%s",
+             today_time ? today_time : "");
+    mutex_unlock(&app->mutex);
+}
+
+static void format_today_time(double seconds, char *out, size_t size) {
+    long total = (long)(seconds < 0.0 ? 0.0 : seconds);
+    long hours = total / 3600;
+    long minutes = (total % 3600) / 60;
+    if (hours > 0) {
+        snprintf(out, size, "Today: %ldh %02ldm", hours, minutes);
+    } else {
+        snprintf(out, size, "Today: %ldm", minutes);
+    }
 }
 
 static bool take_flag(desktop_app *app, bool *flag) {
@@ -123,6 +144,19 @@ static int run_tracking(desktop_app *app, http_client *client,
 
     set_view(app, TRAY_TRACKING, true, name, "Tracking");
 
+    double today_active_seconds = 0.0;
+    double last_fetch = 0.0;
+    double last_tick = tracker_now_seconds();
+    char today_buf[128] = {0};
+
+    if (http_get_today_active_seconds(client, session.username, &today_active_seconds) == HTTP_RESULT_OK) {
+        last_fetch = tracker_now_seconds();
+        format_today_time(today_active_seconds, today_buf, sizeof(today_buf));
+        set_today_time(app, today_buf);
+    }
+
+    bool last_afk = session.afk;
+
     while (app->running && !is_logout_requested(app)) {
         if (take_flag(app, &app->dashboard_requested))
             open_dashboard(app, session.username);
@@ -130,6 +164,31 @@ static int run_tracking(desktop_app *app, http_client *client,
             tracker_session_cleanup(&session);
             return HTTP_RESULT_UNAUTHORIZED;
         }
+
+        double now = tracker_now_seconds();
+        double delta = now - last_tick;
+        last_tick = now;
+
+        if (!session.afk && delta > 0.0 && delta < 2.0) {
+            today_active_seconds += delta;
+        }
+
+        if (now - last_fetch >= 30.0) {
+            double server_seconds = 0.0;
+            if (http_get_today_active_seconds(client, session.username, &server_seconds) == HTTP_RESULT_OK) {
+                today_active_seconds = server_seconds;
+                last_fetch = now;
+            }
+        }
+
+        format_today_time(today_active_seconds, today_buf, sizeof(today_buf));
+        set_today_time(app, today_buf);
+
+        if (session.afk != last_afk) {
+            last_afk = session.afk;
+            set_view(app, TRAY_TRACKING, true, name, session.afk ? "AFK" : "Tracking");
+        }
+
         tracker_sleep_seconds(0.1);
     }
 

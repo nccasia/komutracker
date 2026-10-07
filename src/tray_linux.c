@@ -17,6 +17,7 @@ static tray_callbacks callbacks;
 static AppIndicator *indicator;
 static GtkWidget *menu;
 static GtkWidget *account_item;
+static GtkWidget *today_item;
 static GtkWidget *status_item;
 static GtkWidget *dashboard_item;
 static GtkWidget *auth_item;
@@ -65,9 +66,12 @@ int tray_init(const tray_callbacks *provided_callbacks) {
 
     menu = gtk_menu_new();
     account_item = new_item("Not Logged In", NULL);
+    today_item = new_item("", NULL);
     status_item = new_item("Starting…", NULL);
     gtk_widget_set_sensitive(account_item, FALSE);
+    gtk_widget_set_sensitive(today_item, FALSE);
     gtk_widget_set_sensitive(status_item, FALSE);
+    gtk_widget_hide(today_item);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), gtk_separator_menu_item_new());
     dashboard_item = new_item("Open Dashboard", G_CALLBACK(dashboard_action));
     auth_item = new_item("Log In", G_CALLBACK(auth_action));
@@ -76,6 +80,7 @@ int tray_init(const tray_callbacks *provided_callbacks) {
     new_item("Quit KomuTracker", G_CALLBACK(quit_action));
 
     gtk_widget_show_all(menu);
+    gtk_widget_hide(today_item);
     app_indicator_set_menu(indicator, GTK_MENU(menu));
     return 0;
 }
@@ -84,6 +89,24 @@ void tray_update(const tray_view *view) {
     gtk_menu_item_set_label(GTK_MENU_ITEM(account_item), view->account_name);
     gtk_menu_item_set_label(GTK_MENU_ITEM(status_item), view->status_text);
     gtk_widget_set_sensitive(dashboard_item, view->logged_in);
+
+    if (view->logged_in && view->today_time[0]) {
+        gtk_menu_item_set_label(GTK_MENU_ITEM(today_item), view->today_time);
+        gtk_widget_show(today_item);
+
+        const char *label_text = view->today_time;
+        if (strncmp(label_text, "Today: ", 7) == 0) label_text += 7;
+        app_indicator_set_label(indicator, label_text, "00h 00m");
+
+        char title[512];
+        snprintf(title, sizeof(title), "%s — %s (%s)",
+                 view->account_name, view->today_time, view->status_text);
+        app_indicator_set_title(indicator, title);
+    } else {
+        gtk_widget_hide(today_item);
+        app_indicator_set_label(indicator, "", "");
+        app_indicator_set_title(indicator, "KomuTracker");
+    }
 
     if (view->status == TRAY_AUTHENTICATING) {
         gtk_menu_item_set_label(GTK_MENU_ITEM(auth_item), "Cancel Login");
