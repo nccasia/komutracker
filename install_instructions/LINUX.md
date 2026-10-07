@@ -60,12 +60,12 @@ The standalone CLI file is named `komutracker`. It is dynamically linked and req
 On Ubuntu/Debian:
 ```bash
 sudo apt update
-sudo apt install libcurl4 libx11-6 libxss1
+sudo apt install libcurl4 libx11-6 libxss1 libwayland-client0
 ```
 
 On Arch Linux:
 ```bash
-sudo pacman -S --needed curl libx11 libxss
+sudo pacman -S --needed curl libx11 libxss wayland
 ```
 
 
