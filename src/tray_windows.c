@@ -45,10 +45,14 @@ static void show_menu(void) {
     HMENU menu = CreatePopupMenu();
     if (!menu) return;
 
-    wchar_t account[512], status[256];
+    wchar_t account[512], status[256], today[128];
     utf8_to_wide(current_view.account_name, account, ARRAYSIZE(account));
     utf8_to_wide(current_view.status_text, status, ARRAYSIZE(status));
     AppendMenuW(menu, MF_STRING | MF_DISABLED, 0, account);
+    if (current_view.logged_in && current_view.today_time[0]) {
+        utf8_to_wide(current_view.today_time, today, ARRAYSIZE(today));
+        AppendMenuW(menu, MF_STRING | MF_DISABLED, 0, today);
+    }
     AppendMenuW(menu, MF_STRING | MF_DISABLED, 0, status);
     AppendMenuW(menu, MF_SEPARATOR, 0, NULL);
     AppendMenuW(menu, MF_STRING | (current_view.logged_in ? 0 : MF_GRAYED),
@@ -127,8 +131,15 @@ void tray_update(const tray_view *view) {
     wchar_t account[64], status[48];
     utf8_to_wide(view->account_name, account, ARRAYSIZE(account));
     utf8_to_wide(view->status_text, status, ARRAYSIZE(status));
-    _snwprintf_s(notify_icon.szTip, ARRAYSIZE(notify_icon.szTip), _TRUNCATE,
-                 L"KomuTracker\n%s\n%s", account, status);
+    if (view->logged_in && view->today_time[0]) {
+        wchar_t today[48];
+        utf8_to_wide(view->today_time, today, ARRAYSIZE(today));
+        _snwprintf_s(notify_icon.szTip, ARRAYSIZE(notify_icon.szTip), _TRUNCATE,
+                     L"KomuTracker\n%s\n%s (%s)", account, today, status);
+    } else {
+        _snwprintf_s(notify_icon.szTip, ARRAYSIZE(notify_icon.szTip), _TRUNCATE,
+                     L"KomuTracker\n%s\n%s", account, status);
+    }
     notify_icon.uFlags = NIF_TIP;
     Shell_NotifyIconW(NIM_MODIFY, &notify_icon);
 }

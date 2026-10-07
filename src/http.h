@@ -46,5 +46,7 @@ int http_auth_delete(const http_client *client);
 int http_parse_json_string(const char *json, char *out, size_t size);
 int http_parse_profile(const char *json, char *name, size_t name_size,
                        char *email, size_t email_size);
+int http_parse_events_active_seconds(const char *json, long range_start, long range_end, double *active_seconds);
+int http_get_today_active_seconds(const http_client *client, const char *username, double *active_seconds);
 
 #endif

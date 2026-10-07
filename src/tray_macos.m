@@ -8,6 +8,7 @@ static tray_callbacks callbacks;
 static NSStatusItem *status_item;
 static NSMenu *status_menu;
 static NSMenuItem *account_item;
+static NSMenuItem *today_item;
 static NSMenuItem *state_item;
 static NSMenuItem *dashboard_item;
 static NSMenuItem *auth_item;
@@ -66,10 +67,14 @@ int tray_init(const tray_callbacks *provided_callbacks) {
 
     status_menu = [[NSMenu alloc] initWithTitle:@"KomuTracker"];
     account_item = [[NSMenuItem alloc] initWithTitle:@"Not Logged In" action:nil keyEquivalent:@""];
+    today_item = [[NSMenuItem alloc] initWithTitle:@"" action:nil keyEquivalent:@""];
     state_item = [[NSMenuItem alloc] initWithTitle:@"Starting…" action:nil keyEquivalent:@""];
     [account_item setEnabled:NO];
+    [today_item setEnabled:NO];
+    today_item.hidden = YES;
     [state_item setEnabled:NO];
     [status_menu addItem:account_item];
+    [status_menu addItem:today_item];
     [status_menu addItem:state_item];
     [status_menu addItem:[NSMenuItem separatorItem]];
 
@@ -108,14 +113,22 @@ void tray_update(const tray_view *view) {
     state_item.title = [NSString stringWithUTF8String:view->status_text];
     dashboard_item.enabled = view->logged_in;
 
-    BOOL authenticating = view->status == TRAY_AUTHENTICATING;
-    auth_item.hidden = view->logged_in && !authenticating;
-    auth_item.title = authenticating ? @"Cancel Login" : @"Log In";
-    logout_item.hidden = !view->logged_in || authenticating;
-
-    NSString *tooltip = [NSString stringWithFormat:@"KomuTracker — %@ — %@",
-                          account_item.title, state_item.title];
-    status_item.button.toolTip = tooltip;
+    if (view->logged_in && view->today_time[0]) {
+        today_item.title = [NSString stringWithUTF8String:view->today_time];
+        today_item.hidden = NO;
+        const char *label_text = view->today_time;
+        if (strncmp(label_text, "Today: ", 7) == 0) label_text += 7;
+        status_item.button.title = [NSString stringWithUTF8String:label_text];
+        NSString *tooltip = [NSString stringWithFormat:@"KomuTracker — %@ — %@ (%@)",
+                              account_item.title, today_item.title, state_item.title];
+        status_item.button.toolTip = tooltip;
+    } else {
+        today_item.hidden = YES;
+        status_item.button.title = @"";
+        NSString *tooltip = [NSString stringWithFormat:@"KomuTracker — %@ — %@",
+                              account_item.title, state_item.title];
+        status_item.button.toolTip = tooltip;
+    }
 }
 
 void tray_poll(void) {
