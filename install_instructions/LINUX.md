@@ -32,7 +32,28 @@ To uninstall the package:
 sudo apt remove komutracker
 ```
 
-## Option 2: Install only the standalone CLI
+## Option 2: Install the Arch Linux package (.pkg.tar.zst)
+
+Build and install natively with `makepkg`:
+
+```bash
+cd packaging/arch
+makepkg -si
+```
+
+Or install a prebuilt package with `pacman`:
+
+```bash
+sudo pacman -U komutracker-*-x86_64.pkg.tar.zst
+```
+
+To uninstall:
+
+```bash
+sudo pacman -R komutracker
+```
+
+## Option 3: Install only the standalone CLI
 
 The standalone CLI file is named `komutracker`. It is dynamically linked and requires these runtime libraries:
 

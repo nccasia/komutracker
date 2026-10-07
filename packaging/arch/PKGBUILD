@@ -1,0 +1,43 @@
+# Maintainer: Komu <hello@komu.vn>
+pkgname=komutracker
+pkgver=3.0.1
+pkgrel=1
+pkgdesc="Native active and AFK time tracker (CLI and desktop tray app)"
+arch=('x86_64')
+url="https://tracker.komu.vn"
+license=('proprietary')
+depends=(
+    'curl'
+    'gtk3'
+    'libayatana-appindicator'
+    'libx11'
+    'libxss'
+)
+makedepends=(
+    'cmake'
+    'pkgconf'
+)
+
+build() {
+    local project_dir
+    if [ -f "$startdir/CMakeLists.txt" ]; then
+        project_dir="$startdir"
+    elif [ -f "$startdir/../../CMakeLists.txt" ]; then
+        project_dir="$startdir/../.."
+    else
+        project_dir="$PWD"
+    fi
+
+    cmake -B "$srcdir/build" -S "$project_dir" \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr
+    cmake --build "$srcdir/build"
+}
+
+check() {
+    ctest --test-dir "$srcdir/build" --output-on-failure
+}
+
+package() {
+    DESTDIR="$pkgdir" cmake --install "$srcdir/build"
+}
