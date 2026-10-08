@@ -10,7 +10,7 @@ The build requires the libcurl development library, not only the `curl` command-
 
 ```bash
 sudo apt update
-sudo apt install build-essential cmake pkg-config libcurl4-openssl-dev libx11-dev libxss-dev libgtk-3-dev libayatana-appindicator3-dev
+sudo apt install build-essential cmake pkg-config libcurl4-openssl-dev libx11-dev libxss-dev libgtk-3-dev libayatana-appindicator3-dev libwayland-dev
 ```
 
 Verify libcurl installation:
@@ -29,13 +29,13 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 ### Fedora/RHEL
 
 ```bash
-sudo dnf install gcc make cmake pkgconf-pkg-config libcurl-devel libX11-devel libXScrnSaver-devel gtk3-devel libappindicator-gtk3-devel
+sudo dnf install gcc make cmake pkgconf-pkg-config libcurl-devel libX11-devel libXScrnSaver-devel gtk3-devel libappindicator-gtk3-devel wayland-devel
 ```
 
 ### Arch Linux
 
 ```bash
-sudo pacman -S --needed base-devel cmake pkgconf curl libx11 libxss gtk3 libayatana-appindicator
+sudo pacman -S --needed base-devel cmake pkgconf curl libx11 libxss gtk3 libayatana-appindicator wayland
 ```
 
 ### macOS
@@ -73,7 +73,7 @@ cmake -S . -B build `
 cmake --build build --config Release
 ```
 
-The Linux implementation currently requires an X11 display. A Wayland session without XWayland is not supported.
+The Linux implementation supports native Wayland sessions (using `ext-idle-notify-v1` for accurate hardware input idle tracking on compositors like Hyprland and Sway) and X11 sessions (via `MIT-SCREEN-SAVER`), with automatic detection and graceful fallback.
 
 ## Build
 
@@ -313,4 +313,4 @@ Only the foreground process is sent. Background process lists are never collecte
 
 - Windows: `GetForegroundWindow`, `QueryFullProcessImageName`, and `GetLastInputInfo`.
 - macOS: CoreGraphics window list and idle event APIs. Window titles may require Screen Recording permission.
-- Linux: X11 `_NET_ACTIVE_WINDOW`, process metadata, and XScreenSaver. A Wayland session without XWayland is not supported.
+- Linux: Wayland (`ext-idle-notify-v1` v2 with real-time hardware input idle listener) and X11 (`_NET_ACTIVE_WINDOW`, `XScreenSaver`). Automatic display server detection and graceful fallback.
