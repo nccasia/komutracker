@@ -287,29 +287,33 @@ static time_t parse_iso_timestamp(const char *str) {
     return t;
 }
 
+static void skip_ws(const char **p, const char *end) {
+    while (*p < end && isspace((unsigned char)**p)) (*p)++;
+}
+
 static int extract_json_field(const char *obj_start, const char *obj_end,
                               const char *key, char *out, size_t out_size) {
     char pattern[64];
     snprintf(pattern, sizeof(pattern), "\"%s\"", key);
+
     const char *p = obj_start;
-    while ((p = strstr(p, pattern)) != NULL) {
-        if (p >= obj_end) return -1;
-        p += strlen(pattern);
-        while (p < obj_end && isspace((unsigned char)*p)) p++;
-        if (p < obj_end && *p == ':') {
-            p++;
-            while (p < obj_end && isspace((unsigned char)*p)) p++;
-            if (p < obj_end && *p == '"') {
-                p++;
-                size_t idx = 0;
-                while (p < obj_end && *p != '"') {
-                    if (idx + 1 < out_size) out[idx++] = *p;
-                    p++;
-                }
-                out[idx] = '\0';
-                return 0;
-            }
+    while ((p = strstr(p, pattern)) != NULL && p < obj_end) {
+        const char *cursor = p + strlen(pattern);
+        skip_ws(&cursor, obj_end);
+        if (cursor >= obj_end || *cursor != ':') { p = cursor; continue; }
+        cursor++;
+
+        skip_ws(&cursor, obj_end);
+        if (cursor >= obj_end || *cursor != '"') { p = cursor; continue; }
+        cursor++;
+
+        size_t idx = 0;
+        while (cursor < obj_end && *cursor != '"') {
+            if (idx + 1 < out_size) out[idx++] = *cursor;
+            cursor++;
         }
+        out[idx] = '\0';
+        return 0;
     }
     return -1;
 }
