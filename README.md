@@ -95,8 +95,7 @@ The build produces both the CLI and desktop application:
 - Windows: `build/KomuTracker.exe` and `build/komutracker-cli.exe`.
 - Ubuntu: `build/komutracker-desktop` and `build/komutracker`.
 
-The desktop application only shows a tray/menu-bar icon. Use its menu to log in,
-log out, open the dashboard, inspect connection/tracking status, or quit.
+The desktop application runs as a tray/menu-bar icon. It displays your today's tracked time directly on the tray icon/label (e.g. `2h 15m`) and provides menu options to log in, log out, open the dashboard, inspect connection and AFK tracking status, and quit.
 
 ## Package a release
 
