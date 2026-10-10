@@ -77,6 +77,20 @@ static void set_view(desktop_app *app, tray_status status, bool logged_in,
              name && *name ? name : (logged_in ? "Signed In" : "Not Logged In"));
     snprintf(app->view.status_text, sizeof(app->view.status_text), "%s",
              status_text ? status_text : "");
+    if (!logged_in) app->view.tracked_text[0] = '\0';
+    mutex_unlock(&app->mutex);
+}
+
+static void set_tracked_today(desktop_app *app, double seconds) {
+    mutex_lock(&app->mutex);
+    if (seconds < 0.0) {
+        snprintf(app->view.tracked_text, sizeof(app->view.tracked_text),
+                 "Tracked today: unavailable");
+    } else {
+        long long minutes = (long long)(seconds / 60.0);
+        snprintf(app->view.tracked_text, sizeof(app->view.tracked_text),
+                 "Tracked today: %lldh %02lldm", minutes / 60, minutes % 60);
+    }
     mutex_unlock(&app->mutex);
 }
 
@@ -102,12 +116,32 @@ static void open_dashboard(desktop_app *app, const char *username) {
     if (count > 0 && count < (int)sizeof(url)) auth_open_browser(url);
 }
 
+typedef struct {
+    desktop_app *app;
+    const char *name;
+    bool online;
+} tracking_status_context;
+
+static void tracking_send_status(void *context, const char *event, int result) {
+    tracking_status_context *status = context;
+    if (strcmp(event, "create AFK bucket") && strcmp(event, "afk heartbeat")) return;
+
+    status->online = result == HTTP_RESULT_OK;
+    set_view(status->app,
+             status->online ? TRAY_TRACKING : TRAY_CONNECTION_ERROR,
+             true, status->name,
+             status->online ? "Online" : "Offline — saved locally");
+}
+
 static int run_tracking(desktop_app *app, http_client *client,
-                        const char *name, const char *email) {
+                        const char *name, const char *email, bool online) {
+    tracking_status_context status = { app, name, online };
     tracker_options options = {
         .afk_timeout_seconds = app->config->afk_timeout_seconds,
         .afk_poll_seconds = app->config->afk_poll_seconds,
         .window_poll_seconds = app->config->window_poll_seconds,
+        .on_send = tracking_send_status,
+        .callback_context = &status,
     };
     tracker_session session;
     int initialization = tracker_session_init(&session, client, email, &options);
@@ -121,14 +155,22 @@ static int run_tracking(desktop_app *app, http_client *client,
         return app->running ? 1 : 0;
     }
 
-    set_view(app, TRAY_TRACKING, true, name, "Tracking");
+    set_view(app, status.online ? TRAY_TRACKING : TRAY_CONNECTION_ERROR,
+             true, name,
+             status.online ? "Online" : "Offline — saved locally");
 
+    double next_summary = 0.0;
     while (app->running && !is_logout_requested(app)) {
         if (take_flag(app, &app->dashboard_requested))
             open_dashboard(app, session.username);
         if (tracker_session_poll(&session) == HTTP_RESULT_UNAUTHORIZED) {
             tracker_session_cleanup(&session);
             return HTTP_RESULT_UNAUTHORIZED;
+        }
+        double now = tracker_now_seconds();
+        if (now >= next_summary) {
+            set_tracked_today(app, tracker_session_tracked_today(&session));
+            next_summary = now + 10.0;
         }
         tracker_sleep_seconds(0.1);
     }
@@ -211,6 +253,7 @@ static void desktop_worker(desktop_app *app) {
         char name[512] = {0}, email[512] = {0};
         int profile = http_auth_me(&client, name, sizeof(name), email, sizeof(email));
         if (profile == HTTP_AUTH_UNAUTHORIZED) {
+            tracker_discard_pending_events(&client);
             auth_remove_token();
             auth_remove_profile();
             memset(token, 0, sizeof(token));
@@ -221,10 +264,17 @@ static void desktop_worker(desktop_app *app) {
             continue;
         }
         if (profile != HTTP_AUTH_OK) {
-            set_view(app, TRAY_CONNECTION_ERROR, true, cached_name, "Connection unavailable");
-            for (int tick = 0; tick < 100 && app->running && !is_logout_requested(app); tick++) {
-                if (take_flag(app, &app->dashboard_requested)) open_dashboard(app, "");
-                tracker_sleep_seconds(0.1);
+            int tracking_result = run_tracking(
+                app, &client, cached_name, cached_email, false);
+            if (tracking_result == HTTP_RESULT_UNAUTHORIZED) {
+                auth_remove_token();
+                auth_remove_profile();
+                memset(token, 0, sizeof(token));
+                client.token = NULL;
+                has_token = false;
+                session_replaced = true;
+                cached_name[0] = cached_email[0] = '\0';
+                continue;
             }
             if (is_logout_requested(app)) {
                 logout(app, &client);
@@ -239,7 +289,7 @@ static void desktop_worker(desktop_app *app) {
         snprintf(cached_name, sizeof(cached_name), "%s", name);
         snprintf(cached_email, sizeof(cached_email), "%s", email);
         auth_save_profile(name, email);
-        int tracking_result = run_tracking(app, &client, name, email);
+        int tracking_result = run_tracking(app, &client, name, email, true);
 
         if (tracking_result == HTTP_RESULT_UNAUTHORIZED) {
             auth_remove_token();

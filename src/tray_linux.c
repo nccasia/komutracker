@@ -18,6 +18,7 @@ static AppIndicator *indicator;
 static GtkWidget *menu;
 static GtkWidget *account_item;
 static GtkWidget *status_item;
+static GtkWidget *tracked_item;
 static GtkWidget *dashboard_item;
 static GtkWidget *auth_item;
 static GtkWidget *logout_item;
@@ -66,8 +67,10 @@ int tray_init(const tray_callbacks *provided_callbacks) {
     menu = gtk_menu_new();
     account_item = new_item("Not Logged In", NULL);
     status_item = new_item("Starting…", NULL);
+    tracked_item = new_item("", NULL);
     gtk_widget_set_sensitive(account_item, FALSE);
     gtk_widget_set_sensitive(status_item, FALSE);
+    gtk_widget_set_sensitive(tracked_item, FALSE);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), gtk_separator_menu_item_new());
     dashboard_item = new_item("Open Dashboard", G_CALLBACK(dashboard_action));
     auth_item = new_item("Log In", G_CALLBACK(auth_action));
@@ -83,6 +86,9 @@ int tray_init(const tray_callbacks *provided_callbacks) {
 void tray_update(const tray_view *view) {
     gtk_menu_item_set_label(GTK_MENU_ITEM(account_item), view->account_name);
     gtk_menu_item_set_label(GTK_MENU_ITEM(status_item), view->status_text);
+    gtk_menu_item_set_label(GTK_MENU_ITEM(tracked_item), view->tracked_text);
+    if (view->tracked_text[0]) gtk_widget_show(tracked_item);
+    else gtk_widget_hide(tracked_item);
     gtk_widget_set_sensitive(dashboard_item, view->logged_in);
 
     if (view->status == TRAY_AUTHENTICATING) {

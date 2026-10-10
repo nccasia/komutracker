@@ -80,6 +80,22 @@ int dirs_profile_path(char *out, size_t size) {
 #endif
 }
 
+int dirs_event_store_path(char *out, size_t size) {
+    char base[1024];
+#ifdef _WIN32
+    if (home(base, sizeof(base))) return -1;
+    return join(out, size, base, "komutracker\\events.db");
+#elif defined(__APPLE__)
+    if (home(base, sizeof(base))) return -1;
+    return join(out, size, base, "Library/Application Support/komutracker/events.db");
+#else
+    const char *xdg = getenv("XDG_DATA_HOME");
+    if (xdg && *xdg) return join(out, size, xdg, "komutracker/events.db");
+    if (home(base, sizeof(base))) return -1;
+    return join(out, size, base, ".local/share/komutracker/events.db");
+#endif
+}
+
 int dirs_create_parent(const char *path) {
     char copy[2048];
     size_t length = strlen(path);

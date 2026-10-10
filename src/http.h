@@ -36,6 +36,8 @@ int http_create_bucket(const http_client *client, const char *bucket, const char
                        const char *event_type, const char *hostname);
 int http_heartbeat(const http_client *client, const char *bucket, const char *timestamp,
                    double duration, bool afk, double pulsetime);
+int http_heartbeat_json(const http_client *client, const char *bucket, const char *timestamp,
+                        double duration, const char *data_json, double pulsetime);
 int http_heartbeat_window(const http_client *client, const char *bucket, const char *timestamp,
                           const char *app, const char *title, double pulsetime);
 int http_json_escape(const char *source, char *out, size_t size);

@@ -133,14 +133,15 @@ int main(int argc, char **argv) {
 
     int verification = token ? http_auth_me(&client, NULL, 0, NULL, 0) : HTTP_AUTH_UNAUTHORIZED;
     if (login || verification == HTTP_AUTH_UNAUTHORIZED) {
+        if (token && verification == HTTP_AUTH_UNAUTHORIZED)
+            tracker_discard_pending_events(&client);
         if (!token_arg) auth_remove_token();
         if (auth_login(&client, &options, device, sizeof(device),
                        saved_token, sizeof(saved_token), &running)) {
             http_global_cleanup(); return running ? 1 : 130;
         }
-    } else if (verification != HTTP_AUTH_OK) {
-        fprintf(stderr, "Unable to verify authentication because the server is unavailable\n");
-        http_global_cleanup(); return 1;
+    } else if (verification != HTTP_AUTH_OK && verbose) {
+        log_info("server unavailable; starting with cached authentication");
     }
 
     if (status || login) {
@@ -175,6 +176,7 @@ int main(int argc, char **argv) {
     }
 
     char name[512] = {0}, email[512] = {0};
+    auth_read_profile(name, sizeof(name), email, sizeof(email));
     int profile = http_auth_me(&client, name, sizeof(name), email, sizeof(email));
     if (profile == HTTP_AUTH_OK) {
         auth_save_profile(name, email);
@@ -184,7 +186,9 @@ int main(int argc, char **argv) {
             log_info(message);
         }
     } else if (verbose) {
-        log_info("logged-in user unavailable; using hostname for bucket name");
+        log_info(email[0]
+            ? "logged-in user unavailable; using cached profile"
+            : "logged-in user unavailable; using hostname for bucket name");
     }
 
     tracker_options tracker_config = {
@@ -213,7 +217,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "komutracker %s started for %s\n",
                 KOMUTRACKER_VERSION, config.server_url);
     while (running) {
-        tracker_session_poll(&tracker);
+        if (tracker_session_poll(&tracker) == HTTP_RESULT_UNAUTHORIZED) break;
         tracker_sleep_seconds(tracker_session_delay(&tracker));
     }
     tracker_session_cleanup(&tracker);

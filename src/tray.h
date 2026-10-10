@@ -24,6 +24,7 @@ typedef struct {
     bool logged_in;
     char account_name[512];
     char status_text[256];
+    char tracked_text[128];
 } tray_view;
 
 int tray_init(const tray_callbacks *callbacks);

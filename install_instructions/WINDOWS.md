@@ -61,6 +61,7 @@ KomuTracker stores the device identity and authentication data below:
 
 ```text
 Device ID: %LOCALAPPDATA%\komutracker\.device_id
+Events:    %LOCALAPPDATA%\komutracker\events.db
 Token:     %LOCALAPPDATA%\komutracker\auth\auth.tracker
 Profile:   %LOCALAPPDATA%\komutracker\auth\profile.txt
 PID/lock:  %LOCALAPPDATA%\komutracker\tracker.pid

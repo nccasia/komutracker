@@ -73,6 +73,7 @@ Only one tracking process can run for the current user. A new successful login f
 
 ```text
 Device ID: ~/Library/Application Support/komutracker/.device_id
+Events:    ~/Library/Application Support/komutracker/events.db
 Token:     ~/Library/Caches/komutracker/auth/auth.tracker
 Profile:   ~/Library/Caches/komutracker/auth/profile.txt
 PID:       ~/Library/Caches/komutracker/tracker.pid

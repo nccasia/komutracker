@@ -42,7 +42,7 @@ The standalone CLI file is named `komutracker`. It is dynamically linked and req
 
 ```bash
 sudo apt update
-sudo apt install libcurl4 libglib2.0-0 libx11-6 libxss1
+sudo apt install libcurl4 libglib2.0-0 libsqlite3-0 libx11-6 libxss1
 ```
 
 Install the binary system-wide:
@@ -94,6 +94,7 @@ KomuTracker stores its files under the current user's home directory:
 
 ```text
 Device ID: ~/.local/share/komutracker/.device_id
+Events:    ~/.local/share/komutracker/events.db
 Token:     ~/.cache/komutracker/auth/auth.tracker
 Profile:   ~/.cache/komutracker/auth/profile.txt
 PID:       ~/.cache/komutracker/tracker.pid

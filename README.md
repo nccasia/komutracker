@@ -10,7 +10,7 @@ The build requires the libcurl development library, not only the `curl` command-
 
 ```bash
 sudo apt update
-sudo apt install build-essential cmake pkg-config libcurl4-openssl-dev libglib2.0-dev libx11-dev libxss-dev libgtk-3-dev libayatana-appindicator3-dev
+sudo apt install build-essential cmake pkg-config libcurl4-openssl-dev libglib2.0-dev libsqlite3-dev libx11-dev libxss-dev libgtk-3-dev libayatana-appindicator3-dev
 ```
 
 Verify libcurl installation:
@@ -29,13 +29,13 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 ### Fedora/RHEL
 
 ```bash
-sudo dnf install gcc make cmake pkgconf-pkg-config libcurl-devel glib2-devel libX11-devel libXScrnSaver-devel gtk3-devel libappindicator-gtk3-devel
+sudo dnf install gcc make cmake pkgconf-pkg-config libcurl-devel glib2-devel sqlite-devel libX11-devel libXScrnSaver-devel gtk3-devel libappindicator-gtk3-devel
 ```
 
 ### Arch Linux
 
 ```bash
-sudo pacman -S --needed base-devel cmake pkgconf curl glib2 libx11 libxss gtk3 libappindicator-gtk3
+sudo pacman -S --needed base-devel cmake pkgconf curl glib2 sqlite libx11 libxss gtk3 libappindicator-gtk3
 ```
 
 ### macOS
@@ -63,7 +63,7 @@ Install Visual Studio Build Tools with the **Desktop development with C++** work
 ```powershell
 git clone https://github.com/microsoft/vcpkg.git
 .\vcpkg\bootstrap-vcpkg.bat
-.\vcpkg\vcpkg.exe install curl:x64-windows-static
+.\vcpkg\vcpkg.exe install curl:x64-windows-static sqlite3:x64-windows-static
 ```
 
 Configure using the vcpkg toolchain from a Developer PowerShell:
@@ -100,7 +100,8 @@ The build produces both the CLI and desktop application:
 - Ubuntu: `build/komutracker-desktop` and `build/komutracker`.
 
 The desktop application only shows a tray/menu-bar icon. Use its menu to log in,
-log out, open the dashboard, inspect connection/tracking status, or quit.
+log out, open the dashboard, inspect connection status and locally tracked
+non-AFK time for the current day, or quit.
 
 ## Package a release
 
@@ -258,12 +259,39 @@ Only one instance runs at a time. Launching the command again while another inst
 Saved credentials:
 
 - Linux device ID: `~/.local/share/komutracker/.device_id`
+- Linux event journal: `~/.local/share/komutracker/events.db`
 - Linux token: `~/.cache/komutracker/auth/auth.tracker`
 - macOS device ID: `~/Library/Application Support/komutracker/.device_id`
+- macOS event journal: `~/Library/Application Support/komutracker/events.db`
 - macOS token: `~/Library/Caches/komutracker/auth/auth.tracker`
 - Windows: under `%LOCALAPPDATA%\komutracker`
 
-Token and device files use owner-only permissions on POSIX systems. Tokens are never printed by the CLI.
+Token, device, and event-journal files use owner-only permissions on POSIX systems. Tokens are never printed by the CLI.
+
+AFK heartbeats are merged into the current state segment in memory. That
+segment is checkpointed to the SQLite event journal every five minutes, on each
+AFK/non-AFK transition, and during a clean shutdown. This keeps normal SQLite
+writes low; an abrupt crash can lose at most the uncheckpointed part of the
+current five-minute interval. Pending events are replayed oldest-first when the
+server is reachable again. Network heartbeats continue directly from the
+in-memory segment, so checkpointing does not add upload latency.
+
+Consecutive heartbeats with the same status and an interval gap of at most 370
+seconds are merged into one local state segment, matching the default server
+merge policy. Sent and pending segments remain available locally for
+diagnostics and are removed five days after their last update. The tracked-time
+summary reads SQLite after startup and checkpoints, then combines that cached
+total with the current in-memory segment instead of querying the database on
+every tray refresh.
+
+If the server rejects an authenticated client with HTTP 401 or 403 (for
+example, because the same account was activated on another device), tracking
+stops immediately. The client checkpoints its final in-memory segment and
+marks every unsent event for that server and device as discarded. Discarded
+events remain in the five-day local journal for future diagnostics, but are
+never uploaded after re-authentication and are excluded from the tray's tracked
+time total. Network timeouts, DNS failures, and server errors do not discard
+events.
 
 Application defaults are defined once in `src/config.c` and shared by the desktop
 and CLI clients. KomuTracker does not read application settings or credentials from

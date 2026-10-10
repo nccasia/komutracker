@@ -9,6 +9,7 @@ static NSStatusItem *status_item;
 static NSMenu *status_menu;
 static NSMenuItem *account_item;
 static NSMenuItem *state_item;
+static NSMenuItem *tracked_item;
 static NSMenuItem *dashboard_item;
 static NSMenuItem *auth_item;
 static NSMenuItem *logout_item;
@@ -67,10 +68,13 @@ int tray_init(const tray_callbacks *provided_callbacks) {
     status_menu = [[NSMenu alloc] initWithTitle:@"KomuTracker"];
     account_item = [[NSMenuItem alloc] initWithTitle:@"Not Logged In" action:nil keyEquivalent:@""];
     state_item = [[NSMenuItem alloc] initWithTitle:@"Starting…" action:nil keyEquivalent:@""];
+    tracked_item = [[NSMenuItem alloc] initWithTitle:@"" action:nil keyEquivalent:@""];
     [account_item setEnabled:NO];
     [state_item setEnabled:NO];
+    [tracked_item setEnabled:NO];
     [status_menu addItem:account_item];
     [status_menu addItem:state_item];
+    [status_menu addItem:tracked_item];
     [status_menu addItem:[NSMenuItem separatorItem]];
 
     dashboard_item = [[NSMenuItem alloc] initWithTitle:@"Open Dashboard"
@@ -106,6 +110,8 @@ int tray_init(const tray_callbacks *provided_callbacks) {
 void tray_update(const tray_view *view) {
     account_item.title = [NSString stringWithUTF8String:view->account_name];
     state_item.title = [NSString stringWithUTF8String:view->status_text];
+    tracked_item.title = [NSString stringWithUTF8String:view->tracked_text];
+    tracked_item.hidden = view->tracked_text[0] == '\0';
     dashboard_item.enabled = view->logged_in;
 
     BOOL authenticating = view->status == TRAY_AUTHENTICATING;
@@ -140,6 +146,7 @@ void tray_cleanup(void) {
     }
     [account_item release];
     [state_item release];
+    [tracked_item release];
     [dashboard_item release];
     [auth_item release];
     [logout_item release];

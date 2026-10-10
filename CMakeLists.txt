@@ -5,6 +5,7 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 find_package(CURL REQUIRED)
+find_package(SQLite3 REQUIRED)
 find_package(Threads REQUIRED)
 include(GNUInstallDirs)
 
@@ -16,6 +17,7 @@ set(KOMUTRACKER_COMMON_SOURCES
     src/auth.c
     src/dirs.c
     src/instance.c
+    src/event_store.c
 )
 
 if(WIN32)
@@ -36,7 +38,8 @@ endif()
 function(configure_komutracker_target target)
     target_include_directories(${target} PRIVATE src)
     target_compile_definitions(${target} PRIVATE KOMUTRACKER_VERSION="${PROJECT_VERSION}")
-    target_link_libraries(${target} PRIVATE CURL::libcurl Threads::Threads)
+    target_include_directories(${target} PRIVATE ${SQLite3_INCLUDE_DIRS})
+    target_link_libraries(${target} PRIVATE CURL::libcurl Threads::Threads ${SQLite3_LIBRARIES})
 
     if(WIN32)
         target_link_libraries(${target} PRIVATE ws2_32 bcrypt shell32)
@@ -142,13 +145,23 @@ endif()
 
 include(CTest)
 if(BUILD_TESTING)
+    function(enable_test_assertions target)
+        if(MSVC)
+            target_compile_options(${target} PRIVATE /UNDEBUG)
+        else()
+            target_compile_options(${target} PRIVATE -UNDEBUG)
+        endif()
+    endfunction()
+
     add_executable(afk-state-tests tests/test_state.c src/afk.c)
     target_include_directories(afk-state-tests PRIVATE src)
+    enable_test_assertions(afk-state-tests)
     add_test(NAME afk-state-tests COMMAND afk-state-tests)
 
     add_executable(auth-tests tests/test_auth.c src/http.c src/auth.c src/dirs.c)
     target_include_directories(auth-tests PRIVATE src)
     target_link_libraries(auth-tests PRIVATE CURL::libcurl)
+    enable_test_assertions(auth-tests)
     if(WIN32)
         target_link_libraries(auth-tests PRIVATE bcrypt shell32)
     endif()
@@ -157,7 +170,14 @@ if(BUILD_TESTING)
     add_executable(window-tests tests/test_window.c src/http.c)
     target_include_directories(window-tests PRIVATE src)
     target_link_libraries(window-tests PRIVATE CURL::libcurl)
+    enable_test_assertions(window-tests)
     add_test(NAME window-tests COMMAND window-tests)
+
+    add_executable(event-store-tests tests/test_event_store.c src/event_store.c)
+    target_include_directories(event-store-tests PRIVATE src ${SQLite3_INCLUDE_DIRS})
+    target_link_libraries(event-store-tests PRIVATE ${SQLite3_LIBRARIES})
+    enable_test_assertions(event-store-tests)
+    add_test(NAME event-store-tests COMMAND event-store-tests)
 endif()
 
 if(WIN32)
@@ -172,7 +192,7 @@ else()
     set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Komu")
     set(CPACK_DEBIAN_PACKAGE_SECTION utils)
     set(CPACK_DEBIAN_PACKAGE_DEPENDS
-        "libc6, libcurl4, libglib2.0-0, libx11-6, libxss1, libgtk-3-0, libayatana-appindicator3-1")
+        "libc6, libcurl4, libglib2.0-0, libsqlite3-0, libx11-6, libxss1, libgtk-3-0, libayatana-appindicator3-1")
     set(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
 endif()
 set(CPACK_PACKAGE_NAME "KomuTracker")

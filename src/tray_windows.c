@@ -45,11 +45,14 @@ static void show_menu(void) {
     HMENU menu = CreatePopupMenu();
     if (!menu) return;
 
-    wchar_t account[512], status[256];
+    wchar_t account[512], status[256], tracked[128];
     utf8_to_wide(current_view.account_name, account, ARRAYSIZE(account));
     utf8_to_wide(current_view.status_text, status, ARRAYSIZE(status));
+    utf8_to_wide(current_view.tracked_text, tracked, ARRAYSIZE(tracked));
     AppendMenuW(menu, MF_STRING | MF_DISABLED, 0, account);
     AppendMenuW(menu, MF_STRING | MF_DISABLED, 0, status);
+    if (current_view.tracked_text[0])
+        AppendMenuW(menu, MF_STRING | MF_DISABLED, 0, tracked);
     AppendMenuW(menu, MF_SEPARATOR, 0, NULL);
     AppendMenuW(menu, MF_STRING | (current_view.logged_in ? 0 : MF_GRAYED),
                 MENU_DASHBOARD, L"Open Dashboard");

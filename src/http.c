@@ -153,14 +153,29 @@ int http_heartbeat_window(const http_client *client, const char *bucket, const c
 
 int http_heartbeat(const http_client *client, const char *bucket, const char *timestamp,
                    double duration, bool afk, double pulsetime) {
+    return http_heartbeat_json(client, bucket, timestamp, duration,
+                               afk ? "{\"status\":\"afk\"}"
+                                   : "{\"status\":\"not-afk\"}",
+                               pulsetime);
+}
+
+int http_heartbeat_json(const http_client *client, const char *bucket, const char *timestamp,
+                        double duration, const char *data_json, double pulsetime) {
     CURL *curl = curl_easy_init();
     if (!curl) return -1;
     char *escaped = curl_easy_escape(curl, bucket, 0);
-    char url[2048], body[2048];
+    char url[2048], body[12288];
     if (!escaped) { curl_easy_cleanup(curl); return -1; }
-    snprintf(url, sizeof(url), "%s/api/0/buckets/%s/heartbeat?pulsetime=%.3f", client->base_url, escaped, pulsetime);
-    snprintf(body, sizeof(body), "{\"timestamp\":\"%s\",\"duration\":%.3f,\"data\":{\"status\":\"%s\"}}", timestamp, duration, afk ? "afk" : "not-afk");
+    int url_length = snprintf(
+        url, sizeof(url), "%s/api/0/buckets/%s/heartbeat?pulsetime=%.3f",
+        client->base_url, escaped, pulsetime);
+    int body_length = snprintf(
+        body, sizeof(body),
+        "{\"timestamp\":\"%s\",\"duration\":%.3f,\"data\":%s}",
+        timestamp, duration, data_json);
     curl_free(escaped); curl_easy_cleanup(curl);
+    if (url_length < 0 || url_length >= (int)sizeof(url) ||
+        body_length < 0 || body_length >= (int)sizeof(body)) return HTTP_RESULT_ERROR;
 
     char response[1024];
     long status = 0;
