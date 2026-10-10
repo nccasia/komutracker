@@ -10,7 +10,7 @@ The build requires the libcurl development library, not only the `curl` command-
 
 ```bash
 sudo apt update
-sudo apt install build-essential cmake pkg-config libcurl4-openssl-dev libx11-dev libxss-dev libgtk-3-dev libayatana-appindicator3-dev
+sudo apt install build-essential cmake pkg-config libcurl4-openssl-dev libglib2.0-dev libx11-dev libxss-dev libgtk-3-dev libayatana-appindicator3-dev
 ```
 
 Verify libcurl installation:
@@ -29,13 +29,13 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 ### Fedora/RHEL
 
 ```bash
-sudo dnf install gcc make cmake pkgconf-pkg-config libcurl-devel libX11-devel libXScrnSaver-devel gtk3-devel libappindicator-gtk3-devel
+sudo dnf install gcc make cmake pkgconf-pkg-config libcurl-devel glib2-devel libX11-devel libXScrnSaver-devel gtk3-devel libappindicator-gtk3-devel
 ```
 
 ### Arch Linux
 
 ```bash
-sudo pacman -S --needed base-devel cmake pkgconf curl libx11 libxss gtk3 libappindicator-gtk3
+sudo pacman -S --needed base-devel cmake pkgconf curl glib2 libx11 libxss gtk3 libappindicator-gtk3
 ```
 
 ### macOS
@@ -75,7 +75,9 @@ cmake -S . -B build `
 cmake --build build --config Release
 ```
 
-The Linux implementation currently requires an X11 display. A Wayland session without XWayland is not supported.
+On Linux, AFK tracking supports X11 and native Wayland sessions. Wayland uses
+the session D-Bus idle API provided by Mutter (GNOME/Ubuntu/Phosh), with the
+freedesktop ScreenSaver API as a fallback.
 
 ## Build
 
@@ -305,4 +307,4 @@ Only the foreground process is sent. Background process lists are never collecte
 
 - Windows: `GetForegroundWindow`, `QueryFullProcessImageName`, and `GetLastInputInfo`.
 - macOS: CoreGraphics window list and idle event APIs. Window titles may require Screen Recording permission.
-- Linux: X11 `_NET_ACTIVE_WINDOW`, process metadata, and XScreenSaver. A Wayland session without XWayland is not supported.
+- Linux AFK: XScreenSaver on X11; Mutter IdleMonitor or the freedesktop ScreenSaver D-Bus API on Wayland.

@@ -20,6 +20,10 @@ komutracker-desktop
 
 The desktop application runs in the system tray only; it does not open a normal window or terminal. Open the tray menu and select **Log In**. If the icon is not visible, check the desktop's hidden/background-app indicators.
 
+AFK tracking works in both X11 and native Wayland sessions. On Wayland it uses
+the session idle service exposed by GNOME/Ubuntu/Phosh, or the freedesktop
+ScreenSaver service when the desktop provides it.
+
 The DEB also installs the CLI:
 
 ```bash
@@ -38,7 +42,7 @@ The standalone CLI file is named `komutracker`. It is dynamically linked and req
 
 ```bash
 sudo apt update
-sudo apt install libcurl4 libx11-6 libxss1
+sudo apt install libcurl4 libglib2.0-0 libx11-6 libxss1
 ```
 
 Install the binary system-wide:
@@ -96,4 +100,3 @@ PID:       ~/.cache/komutracker/tracker.pid
 ```
 
 The corresponding XDG directories are used when `XDG_DATA_HOME` or `XDG_CACHE_HOME` is configured.
-
