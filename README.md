@@ -51,6 +51,8 @@ Homebrew installs curl as keg-only on many systems. If CMake cannot find it, con
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" \
+  -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14 \
   -DCURL_ROOT="$(brew --prefix curl)"
 ```
 
